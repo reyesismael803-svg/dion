@@ -1,0 +1,1663 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><script>if(window.parent===window){document.write('<script src="shim.js"><\/script>');}</script><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<script>if(window.parent!==window && !window.claude){ window.claude={use: async n=>{ for(let i=0;i<50;i++){ try{ const c=window.parent.claude; if(c&&c.use) return c.use(n);}catch(e){} await new Promise(r=>setTimeout(r,100)); } return null; }}; }</script>
+<title>DION · Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&family=Chakra+Petch:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#04070C; --bg2:#08101A; --panel:#0A131F; --panel2:#0E1928; --glass:rgba(10,19,31,.82);
+  --line:rgba(120,200,255,.13); --line2:rgba(120,200,255,.26); --grid:rgba(120,200,255,.045);
+  --ink:#E4EEFA; --muted:#8CA0B6; --faint:#55677C;
+  --acc:#38E1FF; --acc-rgb:56,225,255; --acc-ink:#021016;
+  --done:#B6FF3C; --done-rgb:182,255,60; --done-ink:#0B1400;
+  --warn:#FF5C7A;
+  --m-top:#1B2C40; --m-l:#10202F; --m-r:#0B1724; --ground:#0D1A27;
+  --f-d:"Michroma","Eurostile","Arial Black",system-ui,sans-serif;
+  --f-b:"Chakra Petch",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-m:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --glow:0 0 0 1px rgba(var(--acc-rgb),.35),0 0 24px -4px rgba(var(--acc-rgb),.45);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-b);font-size:14.5px;line-height:1.5;overflow:hidden}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+input,textarea,select{background:rgba(255,255,255,.03);border:1px solid var(--line2);border-radius:6px;padding:8px 10px;color:var(--ink);outline:none;width:100%}
+input:focus,textarea:focus,select:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(var(--acc-rgb),.15)}
+select option{background:var(--panel)}
+textarea{resize:vertical;min-height:70px}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+::selection{background:rgba(var(--acc-rgb),.35)}
+.mono{font-family:var(--f-m)}
+#app{display:flex;flex-direction:column;height:100%;position:relative}
+#app::before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(900px 500px at 12% -10%,rgba(var(--acc-rgb),.10),transparent 60%),radial-gradient(700px 500px at 110% 110%,rgba(var(--done-rgb),.06),transparent 60%);z-index:0}
+#app > *{position:relative;z-index:1}
+
+/* ---------- buttons & chips ---------- */
+.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:rgba(255,255,255,.03);color:var(--ink);padding:7px 13px;border-radius:6px;font-size:13px;font-weight:500;letter-spacing:.02em;white-space:nowrap}
+.btn:hover{border-color:var(--acc);color:#fff;box-shadow:var(--glow)}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:var(--acc-ink);font-weight:700}
+.btn.pri:hover{filter:brightness(1.1)}
+.btn.done{background:var(--done);border-color:var(--done);color:var(--done-ink);font-weight:700}
+.btn.ghost{border-color:transparent;background:none;color:var(--muted)}
+.btn.ghost:hover{color:var(--ink);box-shadow:none;border-color:var(--line2)}
+.btn.danger{color:var(--warn);border-color:rgba(255,92,122,.4)}
+.btn.sm{padding:4px 9px;font-size:12px}
+.btn svg{flex:none}
+.chip{border:1px solid var(--line2);background:rgba(255,255,255,.02);border-radius:999px;padding:3px 11px;font-size:12px;color:var(--muted)}
+.chip:hover{color:var(--ink);border-color:var(--acc)}
+.chip[aria-pressed="true"]{background:rgba(var(--acc-rgb),.14);color:var(--acc);border-color:var(--acc)}
+.chip.dn[aria-pressed="true"]{background:rgba(var(--done-rgb),.14);color:var(--done);border-color:var(--done)}
+.tag{font-family:var(--f-m);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.lbl{font-family:var(--f-m);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+
+/* ---------- top bar ---------- */
+.top{display:flex;align-items:stretch;border-bottom:1px solid var(--line);background:rgba(4,7,12,.85);backdrop-filter:blur(10px);flex-wrap:wrap;min-height:60px;z-index:40}
+.brand{display:flex;align-items:center;gap:12px;padding:8px 18px;border-right:1px solid var(--line);min-width:0}
+.logo{width:38px;height:38px;border-radius:8px;display:grid;place-items:center;border:1px solid var(--line2);background:linear-gradient(135deg,rgba(var(--acc-rgb),.25),transparent);overflow:hidden;flex:none}
+.logo img{width:100%;height:100%;object-fit:contain}
+.logo svg{color:var(--acc)}
+.brand .t{display:flex;flex-direction:column;min-width:0}
+.brand b{font-family:var(--f-d);font-size:13px;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:400}
+.brand span{font-family:var(--f-m);font-size:10px;color:var(--muted);letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tabs{display:flex;border-right:1px solid var(--line)}
+.tab{border:0;background:none;padding:0 18px;font-family:var(--f-m);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);position:relative}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--acc)}
+.tab[aria-selected="true"]::after{content:"";position:absolute;left:14px;right:14px;bottom:-1px;height:2px;background:var(--acc);box-shadow:0 0 12px var(--acc)}
+.tab .n{display:inline-block;min-width:18px;padding:0 5px;margin-left:6px;border-radius:9px;background:rgba(var(--acc-rgb),.15);color:var(--acc);font-size:10px}
+.searchwrap{flex:1;display:flex;align-items:center;padding:10px 14px;position:relative;min-width:220px}
+.search{max-width:460px;padding-left:34px;background:rgba(255,255,255,.03)}
+.searchwrap svg{position:absolute;left:26px;top:50%;transform:translateY(-50%);color:var(--faint)}
+.results{position:absolute;top:calc(100% - 6px);left:14px;width:min(540px,calc(100vw - 28px));max-height:62vh;overflow:auto;background:var(--panel);border:1px solid var(--line2);border-radius:10px;box-shadow:0 20px 60px -10px #000;padding:6px;z-index:60}
+.res{display:grid;grid-template-columns:auto 1fr;gap:1px 12px;width:100%;text-align:left;border:0;background:none;border-radius:6px;padding:8px 10px}
+.res:hover,.res.on{background:rgba(var(--acc-rgb),.1)}
+.res .c{font-family:var(--f-m);font-size:10.5px;color:var(--acc);grid-row:span 2;padding-top:3px}
+.res .n{font-weight:600}
+.res .p{font-size:12px;color:var(--muted)}
+.topr{display:flex;align-items:center;gap:6px;padding:8px 14px;border-left:1px solid var(--line)}
+.meta{display:flex;gap:16px;margin-right:8px}
+.meta div{display:flex;flex-direction:column;line-height:1.1;align-items:flex-end}
+.meta b{font-family:var(--f-d);font-size:15px;font-weight:400;font-variant-numeric:tabular-nums}
+.meta span{font-family:var(--f-m);font-size:9px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em}
+.iconbtn{width:36px;height:36px;border-radius:8px;border:1px solid var(--line2);background:rgba(255,255,255,.03);display:grid;place-items:center;color:var(--muted)}
+.iconbtn:hover{color:var(--acc);border-color:var(--acc);box-shadow:var(--glow)}
+
+.view{flex:1;min-height:0;position:relative}
+
+/* ---------- HUD frame ---------- */
+.hud{position:relative;border:1px solid var(--line);background:var(--glass);border-radius:10px}
+.hud::before,.hud::after{content:"";position:absolute;width:14px;height:14px;border-color:var(--acc);border-style:solid;opacity:.8;pointer-events:none}
+.hud::before{top:-1px;left:-1px;border-width:2px 0 0 2px;border-top-left-radius:10px}
+.hud::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0;border-bottom-right-radius:10px}
+
+/* ---------- HOME ---------- */
+#home{overflow:auto;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:40px 40px}
+.wrap{max-width:1200px;margin:0 auto;padding-inline:20px;padding-block:34px 70px;display:flex;flex-direction:column;gap:40px}
+.hero{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:28px;align-items:end}
+.eyebrow{font-family:var(--f-m);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--acc)}
+.hero h1{font-family:var(--f-d);font-weight:400;font-size:clamp(26px,3.8vw,46px);line-height:1.08;margin:.4em 0 .45em;text-wrap:balance;letter-spacing:.02em;text-transform:uppercase}
+.hero h1 em{font-style:normal;color:var(--done);text-shadow:0 0 30px rgba(var(--done-rgb),.35)}
+.hero p{color:var(--muted);max-width:58ch;margin:0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr)}
+.stat{padding:18px 18px 16px;border-right:1px solid var(--line)}
+.stat:last-child{border-right:0}
+.stat b{display:block;font-family:var(--f-d);font-weight:400;font-size:30px;line-height:1;font-variant-numeric:tabular-nums;color:#fff}
+.stat span{font-family:var(--f-m);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-top:8px}
+.stat i{display:block;height:3px;background:var(--line);margin-top:10px;border-radius:2px;overflow:hidden}
+.stat i u{display:block;height:100%;background:var(--done);box-shadow:0 0 10px var(--done)}
+.enter{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:22px 26px;text-align:left;border:1px solid rgba(var(--acc-rgb),.5);background:linear-gradient(90deg,rgba(var(--acc-rgb),.16),rgba(var(--acc-rgb),.02));border-radius:12px;overflow:hidden;position:relative}
+.enter::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.08) 50%,transparent 70%);transform:translateX(-100%);transition:transform .8s}
+.enter:hover{box-shadow:var(--glow)}
+.enter:hover::after{transform:translateX(100%)}
+.enter b{font-family:var(--f-d);font-weight:400;font-size:clamp(16px,2.2vw,24px);letter-spacing:.12em;text-transform:uppercase}
+.enter span{font-family:var(--f-m);font-size:11.5px;color:var(--muted);display:block;margin-top:6px}
+.enter i{font-style:normal;font-family:var(--f-d);font-size:26px;color:var(--acc);transition:transform .25s}
+.enter:hover i{transform:translateX(8px)}
+.sec h2{font-family:var(--f-d);font-weight:400;font-size:15px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 6px}
+.sec .sub{color:var(--muted);margin:0 0 16px;font-size:13.5px}
+.tl-scroll{overflow-x:auto;padding:22px 20px 12px}
+.tl{display:flex;min-width:max-content;position:relative}
+.tl::before{content:"";position:absolute;left:0;right:0;top:15px;height:1px;background:linear-gradient(90deg,var(--acc),rgba(var(--acc-rgb),.1))}
+.yr{display:flex;flex-direction:column;gap:10px;padding:0 20px 10px 0;min-width:250px;position:relative}
+.yr h3{margin:0 0 6px;font-family:var(--f-d);font-weight:400;font-size:22px;line-height:1;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:10px;background:var(--bg);width:max-content;padding-right:10px}
+.yr h3::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--acc);box-shadow:0 0 12px var(--acc)}
+.yr h3 small{font-family:var(--f-m);font-size:10px;color:var(--muted);letter-spacing:.08em}
+.pc{border:1px solid var(--line2);background:var(--panel);text-align:left;padding:0;width:250px;display:flex;flex-direction:column;border-radius:10px;overflow:hidden;position:relative}
+.pc:hover{border-color:var(--done);box-shadow:0 0 0 1px rgba(var(--done-rgb),.3),0 0 30px -8px rgba(var(--done-rgb),.5)}
+.pc .im{height:110px;background:var(--bg2) center/cover no-repeat;border-bottom:1px solid var(--line);display:grid;place-items:center;color:var(--faint)}
+.pc .bd{padding:10px 12px 12px;display:flex;flex-direction:column;gap:2px}
+.pc .c{font-family:var(--f-m);font-size:10px;color:var(--done)}
+.pc .t{font-weight:600;line-height:1.25}
+.pc .n{font-size:12.5px;color:var(--muted)}
+.empty{border:1px dashed var(--line2);border-radius:10px;padding:22px;color:var(--muted)}
+.cov{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.cv{display:grid;grid-template-columns:44px 1fr auto;gap:6px 10px;align-items:center;padding:12px 14px;border:1px solid var(--line);background:var(--glass);border-radius:8px;text-align:left}
+.cv:hover{border-color:var(--acc)}
+.cv .c{font-family:var(--f-m);font-size:11px;color:var(--acc)}
+.cv .n{font-weight:600;font-size:13px;line-height:1.2}
+.cv .k{font-family:var(--f-m);font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.cv .bar{grid-column:1/-1;height:3px;background:var(--line);border-radius:2px;position:relative;overflow:hidden}
+.cv .bar i{position:absolute;inset:0 auto 0 0;background:var(--done);box-shadow:0 0 8px var(--done)}
+.scales{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.sc{padding:16px;display:flex;flex-direction:column;gap:7px}
+.sc b{font-family:var(--f-d);font-weight:400;font-size:13px;letter-spacing:.1em;text-transform:uppercase}
+.sc .r{font-family:var(--f-m);font-size:11.5px;color:var(--acc)}
+.sc p{margin:0;font-size:12.5px;color:var(--muted)}
+.dots{display:inline-flex;gap:3px;vertical-align:middle}
+.dots i{width:6px;height:6px;border-radius:1px;background:rgba(255,255,255,.12);display:block}
+.dots i.on{background:var(--acc);box-shadow:0 0 6px rgba(var(--acc-rgb),.7)}
+
+/* ---------- ATLAS ---------- */
+#atlas{display:grid;grid-template-columns:260px minmax(0,1fr);overflow:hidden}
+.rail{border-right:1px solid var(--line);background:rgba(6,11,18,.9);overflow:auto;display:flex;flex-direction:column;min-height:0}
+.rail .blk{padding:14px 14px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:9px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.cats{list-style:none;margin:0;padding:6px 0}
+.cat{display:grid;grid-template-columns:38px 1fr auto;gap:8px;align-items:center;width:100%;text-align:left;border:0;background:none;padding:7px 14px;font-size:13px;color:var(--muted);border-left:2px solid transparent}
+.cat:hover{color:var(--ink);background:rgba(var(--acc-rgb),.05)}
+.cat.on{color:var(--ink);border-left-color:var(--acc);background:rgba(var(--acc-rgb),.08)}
+.cat .c{font-family:var(--f-m);font-size:10px;color:var(--acc)}
+.cat .k{font-family:var(--f-m);font-size:10px;color:var(--faint);font-variant-numeric:tabular-nums}
+.cat .k b{background:var(--done);color:var(--done-ink);font-weight:600;padding:0 4px;border-radius:3px;margin-right:4px}
+#vp{position:relative;overflow:hidden;touch-action:none;cursor:grab;background-color:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:48px 48px}
+#vp.drag{cursor:grabbing}
+#world{position:absolute;left:0;top:0;transform-origin:0 0}
+.zoomui{position:absolute;right:14px;bottom:14px;display:flex;flex-direction:column;border:1px solid var(--line2);background:var(--glass);border-radius:8px;overflow:hidden;z-index:5}
+.zoomui button{border:0;background:none;width:40px;height:36px;font-family:var(--f-m);font-size:16px;border-bottom:1px solid var(--line);color:var(--muted)}
+.zoomui button:last-child{border-bottom:0;font-size:9px;letter-spacing:.1em}
+.zoomui button:hover{color:var(--acc);background:rgba(var(--acc-rgb),.08)}
+.hint,.zlab{position:absolute;font-family:var(--f-m);font-size:10px;letter-spacing:.06em;color:var(--muted);background:var(--glass);border:1px solid var(--line);padding:5px 10px;z-index:5;pointer-events:none;border-radius:6px}
+.hint{left:14px;bottom:14px}
+.zlab{left:14px;top:12px;color:var(--acc)}
+
+/* plates */
+.plate{position:absolute;background:linear-gradient(180deg,rgba(var(--acc-rgb),.10),rgba(6,14,24,.86) 22%,rgba(4,10,18,.9));border:1px solid rgba(var(--acc-rgb),.42);border-radius:14px;box-shadow:0 0 50px -14px rgba(var(--acc-rgb),.55),inset 0 0 70px -30px rgba(var(--acc-rgb),.55),0 40px 80px -40px #000;backdrop-filter:blur(2px)}
+.plate::after{content:"";position:absolute;inset:0;border-radius:14px;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(var(--acc-rgb),.045) 0 1px,transparent 1px 4px),linear-gradient(180deg,transparent 0,rgba(var(--acc-rgb),.10) 48%,transparent 52%,transparent);background-size:100% 100%,100% 300%;animation:scan 7s linear infinite;mix-blend-mode:screen}
+@keyframes scan{from{background-position:0 0,0 120%}to{background-position:0 0,0 -120%}}
+.beam{position:absolute;left:8%;right:8%;bottom:-46px;height:60px;pointer-events:none;background:radial-gradient(50% 40% at 50% 70%,rgba(var(--acc-rgb),.55),rgba(var(--acc-rgb),.12) 55%,transparent 72%);filter:blur(2px)}
+.beam::after{content:"";position:absolute;left:50%;top:62%;width:60%;height:10px;transform:translateX(-50%);border-radius:50%;border:1px solid rgba(var(--acc-rgb),.7);box-shadow:0 0 18px rgba(var(--acc-rgb),.8)}
+.ph h2,.sub h3{text-shadow:0 0 14px rgba(var(--acc-rgb),.45)}
+.hg{width:34px;height:28px;display:block;filter:drop-shadow(0 0 3px rgba(var(--acc-rgb),.6))}
+.ty.done .hg{filter:drop-shadow(0 0 4px rgba(var(--done-rgb),.8)) hue-rotate(0deg)}
+#world.projecting .ty{animation:holoIn .75s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--k) * 22ms)}
+#world.projecting .sub h3{animation:flick .6s steps(2) both}
+@keyframes holoIn{0%{opacity:0;transform:perspective(500px) rotateX(75deg) translateY(12px);filter:brightness(2.5) blur(2px)}60%{opacity:1;filter:brightness(1.6)}100%{opacity:1;transform:none;filter:none}}
+@keyframes flick{0%{opacity:.2}30%{opacity:1}45%{opacity:.4}100%{opacity:1}}
+.hgbig{display:block;width:100%;height:58%;flex:none;filter:drop-shadow(0 0 10px rgba(var(--acc-rgb),.7));animation:hflick 5s infinite}
+@keyframes hflick{0%,100%{opacity:1}47%{opacity:1}48%{opacity:.75}49%{opacity:1}83%{opacity:.9}}
+#world[data-lod="far"] .plate{cursor:pointer}
+.plate::before{content:"";position:absolute;inset:-1px;border-radius:14px;padding:1px;background:linear-gradient(135deg,rgba(var(--acc-rgb),.7),transparent 30%,transparent 70%,rgba(var(--acc-rgb),.35));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.ph{display:grid;grid-template-columns:auto 1fr auto;gap:6px 18px;align-items:center;padding:18px 20px 16px;border-bottom:1px solid var(--line)}
+.ph .c{font-family:var(--f-d);font-size:26px;line-height:1;color:var(--acc);text-shadow:0 0 18px rgba(var(--acc-rgb),.5);grid-row:span 2}
+.ph h2{margin:0;font-family:var(--f-d);font-weight:400;font-size:17px;line-height:1.2;text-transform:uppercase;letter-spacing:.08em}
+.ph .k{font-family:var(--f-m);font-size:10.5px;color:var(--muted);text-align:right;grid-row:span 2;font-variant-numeric:tabular-nums;line-height:1.6}
+.ph p{margin:0;color:var(--muted);font-size:12.5px;max-width:80ch}
+.pb{display:flex;flex-wrap:wrap;padding:6px}
+.sub{width:290px;padding:10px 10px 12px}
+.sub h3{margin:0 0 8px;font-size:12px;line-height:1.3;display:flex;gap:8px;align-items:baseline;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#fff;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.sub h3 .c{font-family:var(--f-m);font-size:9.5px;color:var(--acc);font-weight:400;flex:none;letter-spacing:0}
+.ty{display:grid;grid-template-columns:34px 40px 1fr auto;gap:6px;align-items:center;width:100%;text-align:left;border:1px solid transparent;background:none;padding:4px 6px;border-radius:5px;font-size:12.5px;line-height:1.25;color:var(--ink)}
+.ty:hover{background:rgba(var(--acc-rgb),.08);border-color:rgba(var(--acc-rgb),.3)}
+.ty .c{font-family:var(--f-m);font-size:9px;color:var(--faint)}
+.ty.done .nm{color:var(--done);text-shadow:0 0 12px rgba(var(--done-rgb),.5)}
+.ty.done .c{color:var(--done)}
+.ty.done::after{content:"";grid-column:3;grid-row:1}
+.ty.sel{border-color:var(--acc);background:rgba(var(--acc-rgb),.14);box-shadow:var(--glow)}
+.ty.dim{opacity:.14}
+.ty .ph2{width:8px;height:8px;border-radius:50%;background:var(--done);box-shadow:0 0 8px var(--done);display:inline-block;margin-left:4px}
+.ghost{display:none;position:absolute;inset:0;align-items:center;justify-content:flex-start;flex-direction:column;text-align:center;pointer-events:none;padding:18px 18px 22px;overflow:hidden}
+.ghost b{display:block;font-family:var(--f-d);font-weight:400;font-size:var(--gs,80px);line-height:1.12;text-transform:uppercase;color:#fff;text-wrap:balance;max-width:100%;letter-spacing:.04em;text-shadow:0 0 40px rgba(var(--acc-rgb),.45)}
+.ghost span{display:block;font-family:var(--f-m);font-size:calc(var(--gs,80px) * .4);color:var(--acc);margin-top:.5em}
+#world[data-lod="far"] .ghost,#world[data-measure] .ghost{display:flex}
+#world[data-measure] .ghost{visibility:hidden}
+#world[data-lod="far"] .pb,#world[data-lod="far"] .ph{opacity:.12}
+#world.entering .plate{animation:rise .8s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i) * 40ms)}
+@keyframes rise{from{opacity:0;transform:translateY(80px) scale(.9);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+
+/* ---------- detail drawer ---------- */
+#detail{position:absolute;right:0;top:0;bottom:0;width:560px;max-width:100%;background:rgba(6,11,18,.97);border-left:1px solid var(--line2);z-index:20;transform:translateX(105%);transition:transform .3s cubic-bezier(.2,.7,.2,1);display:flex;flex-direction:column;box-shadow:-30px 0 80px -20px #000}
+#detail.open{transform:none}
+#detail .grip{position:absolute;left:-6px;top:0;bottom:0;width:12px;cursor:ew-resize;z-index:3;touch-action:none}
+#detail .grip::after{content:"";position:absolute;left:5px;top:50%;width:2px;height:48px;margin-top:-24px;border-radius:2px;background:var(--line2);transition:background .2s,height .2s}
+#detail .grip:hover::after,#detail.resizing .grip::after{background:var(--acc);height:90px;margin-top:-45px;box-shadow:0 0 10px var(--acc)}
+#detail .gripv{position:absolute;left:0;right:0;bottom:-6px;height:12px;cursor:ns-resize;z-index:3;touch-action:none}
+#detail .gripv::after{content:"";position:absolute;left:50%;bottom:5px;width:48px;height:2px;margin-left:-24px;border-radius:2px;background:var(--line2)}
+#detail .gripv:hover::after{background:var(--acc)}
+#detail.resizing{transition:none;user-select:none}
+#detail.full{position:fixed;inset:0;background:var(--bg);width:100%!important;bottom:0!important;border-left:0;z-index:75}
+#detail.full .grip,#detail.full .gripv{display:none}
+#detail.full .db{padding-inline:max(20px,calc((100% - 980px)/2))}
+#detail.full .media{margin-inline:calc(-1 * max(20px,calc((100% - 980px)/2)));height:360px}
+.dh .hb{margin-left:auto;display:flex;gap:6px;flex:none}
+.ped{display:flex;flex-direction:column;gap:14px}
+.ped h6{margin:0 0 6px;font-family:var(--f-m);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--acc)}
+.ped ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;counter-reset:pd}
+.ped li{display:grid;grid-template-columns:26px 1fr auto;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;counter-increment:pd}
+.ped li::before{content:counter(pd,decimal-leading-zero);font-family:var(--f-m);font-size:11px;color:var(--acc);padding-top:2px}
+.ped li b{font-weight:600;font-size:13.5px;display:block}
+.ped li span{font-size:12.5px;color:var(--muted)}
+.ped li.mine{border-color:rgba(var(--done-rgb),.4)}
+.ped li.mine::before{color:var(--done)}
+.dh{padding:16px 20px 14px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:flex-start}
+.dh .bc{font-family:var(--f-m);font-size:10.5px;color:var(--acc);line-height:1.5}
+.dh .bc span{color:var(--muted)}
+.dh h2{margin:6px 0 0;font-family:var(--f-d);font-weight:400;font-size:21px;line-height:1.2;text-wrap:balance;text-transform:uppercase;letter-spacing:.04em}
+.x{flex:none}
+.db{overflow:auto;padding:0 20px 40px;display:flex;flex-direction:column;gap:14px;flex:1;min-height:0}
+.db > *{flex:none}
+.media{margin:0 -20px;position:relative;height:250px;background:var(--bg2);border-bottom:1px solid var(--line);overflow:hidden}
+.media img{width:100%;height:100%;object-fit:cover;display:block}
+.media .iso{position:absolute;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:18px 18px}
+.media .iso svg{width:100%;height:100%;display:block}
+.media .iso canvas{width:100%;height:100%;display:block;filter:drop-shadow(0 0 8px rgba(var(--acc-rgb),.7))}
+.media .cap{position:absolute;left:14px;bottom:12px;font-family:var(--f-m);font-size:10px;color:var(--muted);letter-spacing:.06em}
+.media .sc2{position:absolute;left:14px;top:12px;font-family:var(--f-m);font-size:10px;color:var(--muted);line-height:1.5;background:var(--glass);border:1px solid var(--line);padding:6px 9px;border-radius:6px}
+.media .sc2 b{display:block;font-family:var(--f-d);font-weight:400;font-size:12px;letter-spacing:.1em;color:var(--ink);text-transform:uppercase}
+.media .corner{position:absolute;right:12px;top:12px;display:flex;gap:6px}
+.media .corner .btn{background:rgba(4,7,12,.75);backdrop-filter:blur(6px)}
+.media .dsg{position:absolute;right:12px;bottom:12px;font-family:var(--f-d);font-size:11px;letter-spacing:.16em;background:var(--acc);color:var(--acc-ink);border:0;padding:10px 14px;border-radius:6px;box-shadow:0 0 24px rgba(var(--acc-rgb),.6);display:flex;gap:8px;align-items:center}
+.media .dsg:hover{filter:brightness(1.15)}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.acc{border:1px solid var(--line);border-radius:10px;background:var(--glass);overflow:hidden}
+.acc > summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:13px 16px;font-family:var(--f-m);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
+.acc > summary::-webkit-details-marker{display:none}
+.acc > summary .ic{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;background:rgba(var(--acc-rgb),.12);color:var(--acc);flex:none}
+.acc > summary .tt{flex:1}
+.acc > summary .cnt{color:var(--faint);font-size:10px}
+.acc > summary::after{content:"+";font-family:var(--f-m);font-size:16px;color:var(--acc);margin-left:8px;width:12px;text-align:center}
+.acc[open] > summary::after{content:"−"}
+.acc[open] > summary{border-bottom:1px solid var(--line);background:rgba(var(--acc-rgb),.05)}
+.acc .in{padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.qa h5{margin:0 0 3px;font-size:12px;font-family:var(--f-m);letter-spacing:.06em;color:var(--acc);font-weight:500;text-transform:uppercase}
+.qa p{margin:0;font-size:14px;color:var(--ink);max-width:66ch}
+.hl{border:1px solid rgba(var(--done-rgb),.5);background:rgba(var(--done-rgb),.08);border-radius:8px;padding:11px 13px;font-size:13.5px;color:#EFFFD6}
+.hl b{color:var(--done)}
+.ecn{border-left:3px solid var(--acc);background:rgba(var(--acc-rgb),.06);padding:10px 12px;border-radius:0 8px 8px 0;font-size:13.5px}
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.list li{display:grid;grid-template-columns:18px 1fr auto;gap:8px;font-size:13.5px;align-items:start}
+.list li::before{content:"";width:6px;height:6px;margin-top:8px;background:var(--acc);transform:rotate(45deg);box-shadow:0 0 6px var(--acc)}
+.list li.mine::before{background:var(--done);box-shadow:0 0 6px var(--done)}
+.list li .del{opacity:.5}
+.list li:hover .del{opacity:1}
+.del{border:0;background:none;color:var(--faint);font-size:15px;line-height:1;padding:2px 4px}
+.del:hover{color:var(--warn)}
+.faq{border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.faq > summary{list-style:none;cursor:pointer;padding:10px 12px;font-weight:600;display:flex;gap:10px;align-items:flex-start;font-size:13.5px}
+.faq > summary::-webkit-details-marker{display:none}
+.faq > summary::before{content:"?";font-family:var(--f-m);color:var(--acc);flex:none}
+.faq.mine > summary::before{color:var(--done)}
+.faq[open] > summary{background:rgba(var(--acc-rgb),.06)}
+.faq .a{padding:4px 12px 12px 30px;color:var(--muted);font-size:13.5px}
+.pc2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pc2 h6{margin:0 0 8px;font-family:var(--f-m);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase}
+.pc2 .pro h6{color:var(--done)}
+.pc2 .con h6{color:var(--warn)}
+.pc2 .pro .list li::before{background:var(--done);box-shadow:0 0 6px var(--done)}
+.pc2 .con .list li::before{background:var(--warn);box-shadow:0 0 6px var(--warn)}
+.ct{border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.ct > summary{list-style:none;cursor:pointer;padding:11px 12px;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start}
+.ct > summary::-webkit-details-marker{display:none}
+.ct .code{font-family:var(--f-m);font-size:10px;color:var(--acc-ink);background:var(--acc);padding:2px 6px;border-radius:4px;margin-top:2px}
+.ct.mine .code{background:var(--done);color:var(--done-ink)}
+.ct .nm{font-weight:600;font-size:13.5px;line-height:1.3}
+.ct .cond{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:2px}
+.ct .opt{font-family:var(--f-m);font-size:9.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;margin-top:3px}
+.ct[open] > summary{background:rgba(var(--acc-rgb),.06);border-bottom:1px solid var(--line)}
+.ct .body{padding:12px}
+.ct pre{white-space:pre-wrap;font-family:var(--f-b);font-size:13px;line-height:1.6;margin:0 0 12px;max-height:420px;overflow:auto;padding:14px;background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:6px;color:#D5E2F0}
+.addf{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px dashed var(--line2);border-radius:8px}
+.addf .row{display:flex;gap:8px;flex-wrap:wrap}
+.addf .row > *{flex:1;min-width:140px}
+.addtoggle{align-self:flex-start}
+.mine2{display:flex;flex-direction:column;gap:8px}
+.prow{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;padding:8px;border:1px solid rgba(var(--done-rgb),.35);background:rgba(var(--done-rgb),.05);border-radius:8px}
+.prow .th{width:52px;height:40px;border-radius:5px;background:var(--bg2) center/cover;border:1px solid var(--line)}
+.prow b{font-size:13.5px;display:block}
+.prow span{font-size:12px;color:var(--muted)}
+.form{display:grid;grid-template-columns:1fr 100px;gap:8px}
+.form label,.fl{display:flex;flex-direction:column;gap:4px;font-family:var(--f-m);font-size:9.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em}
+.form .full{grid-column:1/-1}
+.form .fa{grid-column:1/-1;display:flex;gap:6px;justify-content:flex-end;align-items:center}
+.ro{font-size:12.5px;color:var(--muted)}
+.sibs{display:flex;flex-wrap:wrap;gap:5px}
+.pending{font-size:12.5px;color:var(--faint);font-style:italic}
+
+/* ---------- overlays (proyecto, sesión, ajustes) ---------- */
+.ov{position:fixed;inset:0;z-index:80;background:rgba(2,4,8,.9);backdrop-filter:blur(8px);display:flex;flex-direction:column}
+.ovh{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);background:rgba(4,7,12,.9);flex-wrap:wrap}
+.ovh .ttl{display:flex;flex-direction:column;min-width:0;flex:1}
+.ovh .ttl small{font-family:var(--f-m);font-size:10px;color:var(--acc);letter-spacing:.12em;text-transform:uppercase}
+.ovh .ttl b{font-family:var(--f-d);font-weight:400;font-size:16px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ovb{flex:1;min-height:0;overflow:auto}
+.saved{font-family:var(--f-m);font-size:10.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.saved i{width:8px;height:8px;border-radius:50%;background:var(--faint)}
+.saved.ok i{background:var(--done);box-shadow:0 0 8px var(--done)}
+.saved.busy i{background:var(--acc);animation:pulse 1s infinite}
+.saved.err i{background:var(--warn)}
+@keyframes pulse{50%{opacity:.3}}
+
+/* project page */
+.pp{max-width:1100px;margin:0 auto;padding:0 20px 80px}
+.pp-hero{position:relative;margin:0 -20px;height:min(52vh,460px);background:var(--bg2) center/cover no-repeat;border-bottom:1px solid var(--line);display:flex;align-items:flex-end}
+.pp-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(4,7,12,.95))}
+.pp-hero .in{position:relative;z-index:1;padding:24px 20px;width:100%;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.pp-hero h1{margin:0;font-family:var(--f-d);font-weight:400;font-size:clamp(22px,3.5vw,40px);text-transform:uppercase;letter-spacing:.04em;line-height:1.1}
+.pp-hero .m{font-family:var(--f-m);font-size:11px;color:var(--acc);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.pp-sec{margin-top:34px;display:flex;flex-direction:column;gap:14px}
+.pp-sec > h2{font-family:var(--f-d);font-weight:400;font-size:13px;letter-spacing:.16em;text-transform:uppercase;margin:0;display:flex;align-items:center;gap:12px}
+.pp-sec > h2::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line2),transparent)}
+.pp-sec > h2 .n{font-family:var(--f-m);color:var(--acc);font-size:11px}
+.steps{display:flex;flex-direction:column;gap:12px;counter-reset:st}
+.step{display:grid;grid-template-columns:48px 1fr;gap:14px;padding:14px;counter-increment:st}
+.step::before{content:counter(st,decimal-leading-zero);font-family:var(--f-d);font-size:20px;color:var(--acc)}
+.step h4{margin:0 0 4px;font-size:15px}
+.step p{margin:0;color:var(--muted);white-space:pre-wrap}
+.step .sa{display:flex;gap:4px;margin-top:8px}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.gi{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--bg2)}
+.gi img,.gi video{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;cursor:zoom-in}
+.gi .doc{aspect-ratio:4/3;display:grid;place-items:center;color:var(--acc);font-family:var(--f-m);font-size:12px;text-decoration:none;flex-direction:column;gap:6px}
+.gi .cp{padding:8px 10px;font-size:12.5px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.gi .cp span{flex:1}
+.drop{border:1px dashed var(--line2);border-radius:10px;padding:18px;text-align:center;color:var(--muted);font-size:13px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.drop.on{border-color:var(--acc);background:rgba(var(--acc-rgb),.06)}
+.lb{position:fixed;inset:0;z-index:95;background:rgba(0,0,0,.92);display:grid;place-items:center;padding:30px}
+.lb img{max-width:100%;max-height:100%;object-fit:contain}
+.lb .corner{position:absolute;right:16px;top:16px;display:flex;gap:8px}
+
+/* session workspace */
+.ws{display:grid;grid-template-columns:230px minmax(0,1fr);height:100%}
+.wsnav{border-right:1px solid var(--line);overflow:auto;padding:12px 0;background:rgba(6,11,18,.7)}
+.wsnav button{display:flex;gap:10px;align-items:center;width:100%;text-align:left;border:0;background:none;padding:9px 16px;color:var(--muted);font-size:13px;border-left:2px solid transparent}
+.wsnav button:hover{color:var(--ink)}
+.wsnav button.on{color:var(--ink);border-left-color:var(--acc);background:rgba(var(--acc-rgb),.08)}
+.wsnav button .n{font-family:var(--f-m);font-size:10px;color:var(--acc);width:18px}
+.wsnav button .ok{margin-left:auto;width:7px;height:7px;border-radius:50%;background:var(--line2)}
+.wsnav button .ok.y{background:var(--done);box-shadow:0 0 6px var(--done)}
+.wsb{overflow:auto;padding:22px 26px 80px}
+.wsb h2{font-family:var(--f-d);font-weight:400;font-size:15px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 4px}
+.wsb .hint2{color:var(--muted);font-size:13px;margin:0 0 18px;max-width:70ch}
+.grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px 14px}
+.grid2 .w2{grid-column:span 2}
+.checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.ck{display:flex;gap:9px;align-items:flex-start;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-size:13.5px;cursor:pointer}
+.ck input{width:auto;margin-top:3px;accent-color:var(--done)}
+.ck.on{border-color:rgba(var(--done-rgb),.5);background:rgba(var(--done-rgb),.05)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:720px}
+.tbl th{font-family:var(--f-m);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);text-align:left;padding:10px 8px;border-bottom:1px solid var(--line2);background:rgba(var(--acc-rgb),.04);font-weight:500}
+.tbl td{padding:4px 6px;border-bottom:1px solid var(--line)}
+.tbl td input{padding:6px 8px;border-color:transparent;background:transparent}
+.tbl td input:hover{border-color:var(--line2)}
+.tbl .num{text-align:right;font-family:var(--f-m);font-variant-numeric:tabular-nums}
+.tbl tfoot td{font-family:var(--f-m);font-size:12px;padding:9px 8px;background:rgba(255,255,255,.02)}
+.tbl tfoot b{color:var(--acc);font-size:14px}
+.qchips{display:flex;flex-wrap:wrap;gap:5px;margin:12px 0}
+.req{display:grid;grid-template-columns:1fr 150px auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.pr1{color:var(--warn)} .pr2{color:var(--acc)} .pr3{color:var(--muted)}
+.slist{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+.scard{padding:16px;display:flex;flex-direction:column;gap:8px}
+.scard h3{margin:0;font-size:16px}
+.scard .m{font-family:var(--f-m);font-size:10.5px;color:var(--muted)}
+.scard .left{font-family:var(--f-m);font-size:10.5px;color:var(--done)}
+.modal{position:fixed;inset:0;z-index:90;background:rgba(2,4,8,.8);backdrop-filter:blur(6px);display:grid;place-items:center;padding:20px}
+.mbox{width:min(640px,100%);max-height:90vh;overflow:auto;padding:22px;display:flex;flex-direction:column;gap:16px;background:var(--panel)}
+.mbox h2{margin:0;font-family:var(--f-d);font-weight:400;font-size:15px;letter-spacing:.14em;text-transform:uppercase}
+.swatches{display:flex;gap:8px;flex-wrap:wrap}
+.sw{width:36px;height:36px;border-radius:8px;border:2px solid transparent}
+.sw[aria-pressed="true"]{border-color:#fff;box-shadow:0 0 14px currentColor}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:99;background:var(--panel2);border:1px solid var(--acc);color:var(--ink);padding:9px 16px;border-radius:8px;font-size:13px;box-shadow:var(--glow)}
+
+@media (max-width: 900px){
+  .meta{display:none}
+  .hero{grid-template-columns:1fr}
+  .scales{grid-template-columns:1fr 1fr}
+  #atlas{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
+  .rail{border-right:0;border-bottom:1px solid var(--line);overflow:visible}
+  .rail .blk{padding:8px 12px;flex-direction:row;align-items:center;overflow-x:auto}
+  .rail .blk .lbl{display:none}
+  .rail .blk.catsblk{padding:0}
+  .chips{flex-wrap:nowrap}
+  .chip{white-space:nowrap}
+  .cats{display:flex;overflow-x:auto;padding:6px 8px;gap:4px}
+  .cats li{flex:none}
+  .cat{grid-template-columns:auto auto;padding:4px 10px;border:1px solid var(--line2);border-radius:999px;white-space:nowrap}
+  .cat .k{display:none}
+  #detail{position:fixed;top:0;width:100%;border-left:0;z-index:70}
+  .hint{display:none}
+  .ws{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
+  .wsnav{display:flex;overflow-x:auto;padding:0;border-right:0;border-bottom:1px solid var(--line)}
+  .wsnav button{white-space:nowrap;border-left:0;border-bottom:2px solid transparent;width:auto}
+  .wsnav button.on{border-bottom-color:var(--acc)}
+  .wsb{padding:18px 16px 60px}
+  .grid2 .w2{grid-column:auto}
+  .pc2{grid-template-columns:1fr}
+}
+@media (max-width: 600px){
+  .brand{border-right:0;flex:1}
+  .tabs{order:3;width:100%;border-right:0;border-top:1px solid var(--line)}
+  .tab{flex:1;padding:11px 6px;font-size:10px;letter-spacing:.08em}
+  .searchwrap{order:4;flex-basis:100%;border-top:1px solid var(--line)}
+  .topr{border-left:0}
+  .stats{grid-template-columns:1fr 1fr 1fr}
+  .stat{padding:14px 10px}
+  .stat b{font-size:22px}
+  .req{grid-template-columns:1fr}
+  .form{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion: reduce){
+  #world.entering .plate{animation:none}
+  #world.projecting .ty,#world.projecting .sub h3,.plate::after,.hgbig{animation:none}
+  #detail{transition:none}
+  .enter::after{display:none}
+}
+.emb .tabs{display:none!important}.emb [data-fnew]{display:none!important}</style>
+</head><body>
+
+<div id="app">
+  <header class="top">
+    <div class="brand">
+      <div class="logo" id="logo"></div>
+      <div class="t"><b id="studio">DION</b><span id="tagline">Taxonomía de edificaciones · micro → macro</span></div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab" id="tab-home" role="tab" aria-selected="true">Trayectoria</button>
+      <button class="tab" id="tab-atlas" role="tab" aria-selected="false">Atlas</button>
+      <button class="tab" id="tab-flujo" role="tab" aria-selected="false">Flujo</button>
+      <button class="tab" id="tab-ses" role="tab" aria-selected="false">Clientes<span class="n" id="ses-n" hidden>0</span></button>
+    </nav>
+    <div class="searchwrap">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg>
+      <input class="search" id="q" type="search" placeholder="Buscar: hostería, rooftop, camal, co-living…" autocomplete="off" aria-label="Buscar tipología">
+      <div class="results" id="results" hidden></div>
+    </div>
+    <div class="topr">
+      <div class="meta">
+        <div><b id="m-ty">0</b><span>Tipologías</span></div>
+        <div><b id="m-done">0</b><span>Realizadas</span></div>
+      </div>
+      <button class="iconbtn" id="btn-settings" aria-label="Personalizar" title="Personalizar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="home" class="view">
+    <div class="wrap">
+      <section class="hero">
+        <div>
+          <div class="eyebrow">// Mi trayectoria</div>
+          <h1>Lo que ya <em>he diseñado</em></h1>
+          <p>Cada tipología que marques como realizada aparece aquí, ordenada por año, con su portada. Tócala para abrir la página del proyecto y mostrar el proceso de diseño.</p>
+        </div>
+        <div class="stats hud">
+          <div class="stat"><b id="s-proj">0</b><span>Proyectos</span></div>
+          <div class="stat"><b id="s-ty">0</b><span id="s-tyl">Tipologías</span><i><u id="s-tyb" style="width:0"></u></i></div>
+          <div class="stat"><b id="s-cat">0</b><span id="s-catl">Categorías</span><i><u id="s-catb" style="width:0"></u></i></div>
+        </div>
+        <button class="enter" id="enter">
+          <div><b>Entrar al atlas</b><span id="enter-sub">Todas las tipologías, organizadas por jerarquía y escala</span></div>
+          <i aria-hidden="true">→</i>
+        </button>
+      </section>
+      <section class="sec">
+        <h2>Línea de tiempo</h2>
+        <p class="sub">Tus proyectos por año. Toca uno para abrir su página de diseño.</p>
+        <div id="timeline"></div>
+      </section>
+      <section class="sec">
+        <h2>Cobertura por categoría</h2>
+        <p class="sub">Qué parte de cada familia tipológica ya has trabajado.</p>
+        <div class="cov" id="cov"></div>
+      </section>
+      <section class="sec">
+        <h2>Escalas</h2>
+        <p class="sub">Escala típica de cada tipología. Es orientativa: el programa y el terreno la hacen variar.</p>
+        <div class="scales" id="scales"></div>
+      </section>
+    </div>
+  </main>
+
+  <main id="atlas" class="view" hidden>
+    <aside class="rail">
+      <div class="blk"><span class="lbl">Escala</span><div class="chips" id="scalechips"></div></div>
+      <div class="blk"><span class="lbl">Mis proyectos</span><div class="chips"><button class="chip dn" id="onlydone" aria-pressed="false">Solo realizadas</button></div></div>
+      <div class="blk catsblk"><span class="lbl" style="padding:0 14px">Categorías</span><ul class="cats" id="cats"></ul></div>
+    </aside>
+    <section id="vp" aria-label="Mapa de tipologías">
+      <div id="world"></div>
+      <div class="zlab" id="zlab">Vista general</div>
+      <div class="hint">Arrastra · rueda o pellizco para zoom · toca una tipología</div>
+      <div class="zoomui">
+        <button id="zin" aria-label="Acercar">+</button>
+        <button id="zout" aria-label="Alejar">−</button>
+        <button id="zfit" aria-label="Ver todo">TODO</button>
+      </div>
+      <aside id="detail" aria-label="Ficha de tipología"></aside>
+    </section>
+  </main>
+
+  <main id="flujo" class="view" hidden style="overflow:auto"></main>
+  <main id="ses" class="view" hidden style="overflow:auto"></main>
+</div>
+<div id="overlay"></div>
+<input type="file" id="filepick" hidden>
+
+<script src="data1.js"></script>
+<script src="data2.js"></script>
+<script src="data3.js"></script>
+<script src="data4.js"></script>
+<script src="data5.js"></script>
+<script src="contratos.js"></script>
+<script src="programas.js"></script>
+<script src="pedir.js"></script>
+<script>window.FICHAS = {}; window.F = function(cat, name, o){ (FICHAS[cat] = FICHAS[cat] || {})[name] = o; }; window.Q = function(c, n, q, x){ const o = (FICHAS[c] || {})[n]; if (!o) return; o.q = q; if (x) Object.assign(o, x); };</script>
+<script src="fichas1.js"></script>
+<script src="fichas2.js"></script>
+<script src="fichas3.js"></script>
+<script src="fichas4.js"></script>
+<script src="fichas5.js"></script>
+<script src="fichas6.js"></script>
+<script src="fichas7.js"></script>
+<script src="fichas8.js"></script>
+<script src="fichas9.js"></script>
+<script src="fichas10.js"></script>
+<script src="fichas11.js"></script>
+<script src="fichas12.js"></script>
+<script src="fichas13.js"></script>
+<script src="fichas14.js"></script>
+<script src="fichas15.js"></script>
+<script src="fichas16.js"></script>
+<script src="fichas17.js"></script>
+<script src="fichas18.js"></script>
+<script src="fichas19.js"></script>
+<script src="fichas20.js"></script>
+<script>
+(function(){
+"use strict";
+/* =========================================================
+   Utilidades
+   ========================================================= */
+const TAX = window.TAX || [], CT = window.CONTRATOS, PROG = window.PROG_BASE || {};
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+const pad = n => String(n).padStart(2,"0");
+const slug = s => norm(s).replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+const uid = p => (p||"") + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+const blobUrl = id => id ? (LOCALBLOBS[id] || ("/_blob/" + id)) : "";
+const LOCALBLOBS = {};
+function toast(msg){ const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); }
+const ICON = {
+  info:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>',
+  doc:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg>',
+  q:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v11H9l-5 4z"/></svg>',
+  pm:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8h6M8 5v6M13 16h6"/></svg>',
+  star:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>',
+  cam:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h3l2-2h6l2 2h3v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+  arrow:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  plus:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>',
+  user:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
+  logo:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 20h18M5 20V9l7-5 7 5v11M9 20v-6h6v6"/></svg>'
+};
+
+/* =========================================================
+   Taxonomía
+   ========================================================= */
+const FORMS = new Set(["casa","modulo","bloque","torre","nave","campus","abierto","anillo","lineal","pabellon","cupula","mastil"]);
+const ESC = [null,
+  {n:"Micro", r:"< 50 m²", d:"Objetos habitables y módulos: kioscos, cápsulas, tiny houses, casetas."},
+  {n:"Pequeña", r:"50 – 500 m²", d:"Viviendas, locales, cafeterías, consultorios y equipamientos de barrio."},
+  {n:"Mediana", r:"500 – 5.000 m²", d:"Edificios de departamentos, clínicas, escuelas, hoteles boutique."},
+  {n:"Grande", r:"5.000 – 50.000 m²", d:"Torres, hospitales, centros comerciales, terminales, estadios medianos."},
+  {n:"Macro", r:"> 50.000 m² / urbana", d:"Complejos, campus, aeropuertos, infraestructura y piezas de ciudad."}
+];
+const ALL = [], BYID = {};
+TAX.forEach((c,ci) => {
+  c.i = ci; c.list = [];
+  const fx = {}; Object.entries((window.FICHAS||{})[c.c] || {}).forEach(([k,v]) => fx[norm(k)] = v);
+  c.s.forEach((s,si) => {
+    s.code = c.c + "-" + pad(si+1); s.cat = c; s.list = [];
+    s.t.forEach((t,ti) => {
+      let ec = t[5]||"", fm = t[6]||"";
+      if (!fm && FORMS.has(ec)){ fm = ec; ec = ""; }
+      const o = {n:t[0], e:t[1]||2, d:t[2]||"", x:t[3]||"", k:(t[4]||"").split("|").map(v=>v.trim()).filter(Boolean), ec, f:fm||s.f||c.f||"bloque", cat:c, sub:s};
+      o.code = s.code + "." + pad(ti+1);
+      let id = slug(c.c + "-" + o.n), n = 2; while (BYID[id]) id = slug(c.c+"-"+o.n) + "-" + (n++);
+      o.id = id; o.key = norm(o.n + " " + o.d + " " + s.n + " " + c.n);
+      o.fi = fx[norm(o.n)] || null;
+      if (o.fi){ o.ct = o.fi.ct; o.cn = o.fi.cn; }
+      BYID[id] = o; ALL.push(o); s.list.push(o); c.list.push(o);
+    });
+  });
+});
+
+/* =========================================================
+   Estado y almacenamiento
+   ========================================================= */
+const S = {
+  settings: {estudio:"", lema:"", logo:"", acento:"cian", retencion:14},
+  projects: [], tipos: {}, sesiones: [],
+  canWrite: true, mode: "local"
+};
+let db = null, assets = null, downloads = null;
+const LS = "atlas-v2";
+function lsGet(){ try { return JSON.parse(localStorage.getItem(LS) || "{}"); } catch(e){ return {}; } }
+function lsSave(){ try { localStorage.setItem(LS, JSON.stringify({projects:S.projects, tipos:S.tipos, settings:S.settings})); } catch(e){} }
+
+const Store = {
+  async set(col, id, data){
+    if (db){ await db.doc(col + "/" + id).set(data); return; }
+    if (col === "proyectos"){ const i = S.projects.findIndex(p=>p.id===id); const v = {...data, id}; i>=0 ? S.projects[i] = v : S.projects.push(v); }
+    else if (col === "tipos"){ S.tipos[id] = data; }
+    else if (col === "ajustes"){ S.settings = {...S.settings, ...data}; }
+    else if (col === "sesiones"){ const i = S.sesiones.findIndex(p=>p.id===id); const v = {...data, id}; i>=0 ? S.sesiones[i] = v : S.sesiones.push(v); }
+    if (col !== "sesiones") lsSave();
+    refresh();
+  },
+  async del(col, id){
+    if (db){ await db.doc(col + "/" + id).delete(); return; }
+    if (col === "proyectos") S.projects = S.projects.filter(p=>p.id!==id);
+    if (col === "sesiones") S.sesiones = S.sesiones.filter(p=>p.id!==id);
+    if (col === "tipos") delete S.tipos[id];
+    lsSave(); refresh();
+  }
+};
+async function safe(fn, okMsg){
+  try { await fn(); if (okMsg) toast(okMsg); return true; }
+  catch(e){
+    const c = e && e.code;
+    if (c === "invalid_argument"){ toast("No tienes permiso para editar este atlas."); }
+    else if (c === "quota_exceeded"){ toast("La base de datos está llena. Borra elementos que ya no uses."); }
+    else toast("No se pudo guardar. Revisa la conexión e inténtalo otra vez.");
+    return false;
+  }
+}
+
+/* -------- archivos (renders, fotos, planos, videos) -------- */
+async function shrinkImage(file){
+  if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size < 900000) return file;
+  try {
+    const bmp = await createImageBitmap(file);
+    const max = 2400, k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    const cv = document.createElement("canvas"); cv.width = Math.round(bmp.width*k); cv.height = Math.round(bmp.height*k);
+    cv.getContext("2d").drawImage(bmp, 0, 0, cv.width, cv.height);
+    const b = await new Promise(r => cv.toBlob(r, "image/jpeg", .86));
+    return b && b.size < file.size ? b : file;
+  } catch(e){ return file; }
+}
+function pickFiles(accept, multiple){
+  return new Promise(res => {
+    const fp = $("#filepick"); fp.value = ""; fp.accept = accept; fp.multiple = !!multiple;
+    fp.onchange = () => res([...fp.files]); fp.click();
+  });
+}
+async function uploadFiles(files){
+  const out = [];
+  for (const f0 of files){
+    const f = await shrinkImage(f0);
+    const type = f.type || f0.type;
+    if (assets){
+      try { const r = await assets.upload(f, type ? {type} : undefined); out.push({id:r.id, ct:r.contentType, name:f0.name}); }
+      catch(e){
+        const c = e && e.code;
+        toast(c === "too_large" ? `"${f0.name}" pesa más de 20 MB. Comprímelo y vuelve a subirlo.` : c === "unsupported_type" ? `"${f0.name}": formato no admitido (usa JPG, PNG, WEBP, MP4, WEBM o PDF).` : c === "quota_or_state" ? "Se llenó el espacio de archivos del atlas." : `No se pudo subir "${f0.name}".`);
+      }
+    } else {
+      const id = uid("local-"); LOCALBLOBS[id] = URL.createObjectURL(f); out.push({id, ct:type, name:f0.name});
+      if (!uploadFiles.warned){ uploadFiles.warned = true; toast("Vista previa: los archivos no se guardan fuera del atlas publicado."); }
+    }
+  }
+  return out;
+}
+
+/* =========================================================
+   Personalización
+   ========================================================= */
+const ACCENTS = {
+  cian:{c:"#38E1FF", rgb:"56,225,255", ink:"#021016"},
+  violeta:{c:"#A78BFF", rgb:"167,139,255", ink:"#0E0620"},
+  magenta:{c:"#FF4FD8", rgb:"255,79,216", ink:"#1E0418"},
+  ambar:{c:"#FFB23F", rgb:"255,178,63", ink:"#1E1200"},
+  menta:{c:"#3CFFB4", rgb:"60,255,180", ink:"#021A10"}
+};
+function applySettings(){
+  const st = S.settings, a = ACCENTS[st.acento] || ACCENTS.cian, r = document.documentElement.style;
+  r.setProperty("--acc", a.c); r.setProperty("--acc-rgb", a.rgb); r.setProperty("--acc-ink", a.ink);
+  $("#studio").textContent = st.estudio || "DION";
+  $("#tagline").textContent = st.lema || "Taxonomía de edificaciones · micro → macro";
+  $("#logo").innerHTML = st.logo ? `<img src="${esc(blobUrl(st.logo))}" alt="Logo">` : ICON.logo;
+}
+
+/* =========================================================
+   Contadores y HOME
+   ========================================================= */
+function doneSet(){ const s = new Set(); S.projects.forEach(p => { if (BYID[p.tipo]) s.add(p.tipo); }); return s; }
+function coverOf(o){ const t = S.tipos[o.id]; if (t && t.portada) return t.portada; const p = S.projects.find(p=>p.tipo===o.id && p.portada); return p ? p.portada : ""; }
+function renderMeta(){
+  const ds = doneSet();
+  $("#m-ty").textContent = ALL.length; $("#m-done").textContent = ds.size;
+  $("#enter-sub").textContent = `${ALL.length} tipologías · ${TAX.length} categorías · de micro a macro`;
+  const n = visibleSessions().length; $("#ses-n").hidden = !n; $("#ses-n").textContent = n;
+}
+function renderHome(){
+  const ds = doneSet(), cats = new Set([...ds].map(id => BYID[id].cat.c));
+  const valid = S.projects.filter(p => BYID[p.tipo]);
+  $("#s-proj").textContent = valid.length;
+  $("#s-ty").textContent = ds.size; $("#s-tyl").textContent = `de ${ALL.length} tipologías`; $("#s-tyb").style.width = (ds.size/ALL.length*100) + "%";
+  $("#s-cat").textContent = cats.size; $("#s-catl").textContent = `de ${TAX.length} categorías`; $("#s-catb").style.width = (cats.size/TAX.length*100) + "%";
+  const tl = $("#timeline");
+  if (!valid.length){ tl.innerHTML = `<div class="empty">Todavía no hay proyectos. En el atlas, abre una tipología y pulsa <b>Marcar como realizada</b>.</div>`; }
+  else {
+    const g = {};
+    valid.forEach(p => { const y = /^\d{4}$/.test(String(p.anio||"")) ? String(p.anio) : "—"; (g[y] = g[y] || []).push(p); });
+    const ys = Object.keys(g).filter(y=>y!=="—").sort(); if (g["—"]) ys.push("—");
+    tl.innerHTML = `<div class="tl-scroll hud"><div class="tl">${ys.map(y => `
+      <div class="yr"><h3>${y==="—" ? "S/F" : y}<small>${g[y].length} ${g[y].length===1?"proyecto":"proyectos"}</small></h3>
+      ${g[y].sort((a,b)=>(a.t||0)-(b.t||0)).map(p => { const o = BYID[p.tipo], cv = p.portada || coverOf(o); return `
+        <button class="pc" data-proj="${esc(p.id)}">
+          <div class="im" style="${cv ? `background-image:url('${esc(blobUrl(cv))}')` : ""}">${cv ? "" : ICON.cam}</div>
+          <div class="bd"><span class="c">${esc(o.code)} · ${esc(o.cat.n)}</span><span class="t">${esc(o.n)}</span>
+          <span class="n">${p.nombre ? esc(p.nombre) : "Sin nombre"}${p.ciudad ? " · " + esc(p.ciudad) : ""}</span></div>
+        </button>`; }).join("")}
+      </div>`).join("")}</div></div>`;
+  }
+  $("#cov").innerHTML = TAX.map(c => { const d = c.list.filter(o => ds.has(o.id)).length;
+    return `<button class="cv" data-cat="${c.i}"><span class="c">${esc(c.c)}</span><span class="n">${esc(c.n)}</span><span class="k">${d}/${c.list.length}</span><span class="bar"><i style="width:${d/c.list.length*100}%"></i></span></button>`; }).join("");
+}
+$("#scales").innerHTML = ESC.slice(1).map((s,i) => `<div class="sc hud"><span class="dots">${[1,2,3,4,5].map(k=>`<i class="${k<=i+1?"on":""}"></i>`).join("")}</span><b>${s.n}</b><span class="r">${s.r}</span><p>${s.d}</p></div>`).join("");
+
+/* =========================================================
+   ATLAS: mapa
+   ========================================================= */
+const world = $("#world"), vp = $("#vp");
+const dots = e => `<span class="dots" title="Escala ${ESC[e].n}">${[1,2,3,4,5].map(k=>`<i class="${k<=e?"on":""}"></i>`).join("")}</span>`;
+world.innerHTML = TAX.map(c => `
+  <article class="plate" id="plate-${c.i}" style="--i:${c.i}">
+    <header class="ph"><span class="c">${esc(c.c)}</span><h2>${esc(c.n)}</h2><span class="k">${c.s.length} SUBCAT.<br>${c.list.length} TIPOLOGÍAS</span><p>${esc(c.d)}</p></header>
+    <div class="pb">${c.s.map(s => `
+      <section class="sub" id="sub-${s.code}"><h3><span class="c">${s.code}</span>${esc(s.n)}</h3>
+      ${s.list.map((o,k) => `<button class="ty" id="ty-${o.id}" data-id="${o.id}" data-e="${o.e}" style="--k:${k}"><canvas class="hg" width="68" height="56" data-f="${o.f}" data-e="${o.e}" data-ph="${(o.code.length*37 + k*53) % 628}" aria-hidden="true"></canvas><span class="c">${o.code.slice(-5)}</span><span class="nm">${esc(o.n)}</span>${dots(o.e)}</button>`).join("")}
+      </section>`).join("")}</div>
+    <div class="ghost"><canvas class="hgbig" width="560" height="400" data-cat="${c.c}" aria-hidden="true"></canvas><b>${esc(c.n)}</b><span>${esc(c.c)} · ${c.list.length}</span></div>
+    <div class="beam"></div>
+  </article>`).join("");
+const UNIT = 290, GAP = 90;
+TAX.forEach(c => {
+  const n = c.s.length;
+  c.cols = n <= 2 ? 2 : n === 3 ? 3 : n === 4 ? 2 : n <= 6 ? 3 : n <= 8 ? 4 : 5;
+  $("#plate-" + c.i).style.width = (c.cols * UNIT + 14) + "px";
+});
+function pack(NC, sizes){
+  const STEP = UNIT + GAP, h = new Array(NC).fill(0), boxes = []; let H = 0, W = 0;
+  sizes.forEach(({span, w, ht}) => {
+    let best = 0, top = Infinity;
+    for (let s = 0; s <= NC - span; s++){ const t = Math.max(...h.slice(s, s+span)); if (t < top - 1){ top = t; best = s; } }
+    for (let s = best; s < best+span; s++) h[s] = top + ht + GAP;
+    const b = {x: best*STEP, y: top, w, h: ht}; boxes.push(b); H = Math.max(H, top + ht); W = Math.max(W, b.x + w);
+  });
+  return {boxes, W, H};
+}
+function layoutWorld(){
+  const sizes = TAX.map(c => { const el = $("#plate-" + c.i); return {span: Math.ceil((c.cols*UNIT + 14)/(UNIT+GAP)) , w: el.offsetWidth, ht: el.offsetHeight}; });
+  const {w:vw, h:vh} = vpSize(), target = Math.max(1.15, vw / Math.max(vh,1));
+  let best = null;
+  for (let nc = 6; nc <= 24; nc++){ const r = pack(nc, sizes); const sc = Math.abs(Math.log((r.W/r.H)/target)) + (r.W*r.H)/5e8; if (!best || sc < best.sc) best = {...r, sc}; }
+  TAX.forEach((c,i) => { const b = best.boxes[i], el = $("#plate-" + c.i); el.style.left = b.x + "px"; el.style.top = b.y + "px"; c.box = b; });
+  world.style.width = best.W + "px"; world.style.height = best.H + "px"; world._w = best.W; world._h = best.H;
+  fitGhosts();
+}
+function fitGhosts(){
+  world.dataset.measure = "1";
+  TAX.forEach(c => {
+    const pl = $("#plate-" + c.i), g = pl.querySelector(".ghost"), b = g.querySelector("b");
+    const W = pl.clientWidth - 40, H = pl.clientHeight * .3;
+    let fs = Math.min(92, Math.max(26, Math.floor(W / 5.2)));
+    b.style.fontSize = fs + "px";
+    const fits = () => { const words = b.textContent.split(/\s+/); let widest = 0; const r = document.createRange();
+      // la palabra más ancha no puede partirse
+      const span = document.createElement("span"); span.style.cssText = "position:absolute;visibility:hidden;white-space:nowrap;font:inherit;letter-spacing:inherit;text-transform:uppercase"; b.appendChild(span);
+      words.forEach(w => { span.textContent = w; widest = Math.max(widest, span.offsetWidth); }); span.remove();
+      return widest <= W && b.offsetHeight <= H && b.scrollWidth <= W + 2; };
+    let guard = 40; while (!fits() && fs > 14 && guard--) { fs -= 3; b.style.fontSize = fs + "px"; }
+    pl.style.setProperty("--gs", fs + "px"); b.style.fontSize = "";
+  });
+  delete world.dataset.measure;
+}
+
+let cam = {x:0, y:0, s:.1}, anim = null, camSet = false;
+function applyCam(){
+  world.style.transform = `translate(${cam.x}px,${cam.y}px) scale(${cam.s})`;
+  const lod = cam.s < .32 ? "far" : cam.s < .6 ? "mid" : "near";
+  if (world.dataset.lod !== lod){
+    const prev = world.dataset.lod; world.dataset.lod = lod;
+    if (prev === "far" && lod !== "far" && !matchMedia("(prefers-reduced-motion: reduce)").matches){ world.classList.remove("projecting"); void world.offsetWidth; world.classList.add("projecting"); clearTimeout(applyCam.pt); applyCam.pt = setTimeout(() => world.classList.remove("projecting"), 1500); }
+  }
+  $("#zlab").textContent = lod === "far" ? "VISTA GENERAL · ACERCA PARA LEER" : `ZOOM ${Math.round(cam.s*100)}%`;
+}
+function vpSize(){ const r = vp.getBoundingClientRect(); let w = r.width; if ($("#detail").classList.contains("open") && !$("#detail").classList.contains("full") && window.innerWidth > 900) w -= $("#detail").offsetWidth; return {w, h:r.height}; }
+function camFor(rect, maxS, p){ const {w,h} = vpSize(); p = p ?? 40; const s = Math.min((w-p*2)/rect.w, (h-p*2)/rect.h, maxS ?? 2); return {s, x:w/2-(rect.x+rect.w/2)*s, y:h/2-(rect.y+rect.h/2)*s}; }
+function fly(to, ms){
+  cancelAnimationFrame(anim);
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches || ms === 0){ cam = to; applyCam(); return; }
+  const from = {...cam}, t0 = performance.now(), D = ms || 700, {w,h} = vpSize();
+  const l0 = Math.log(from.s), l1 = Math.log(to.s);
+  const c0 = {x:(w/2-from.x)/from.s, y:(h/2-from.y)/from.s}, c1 = {x:(w/2-to.x)/to.s, y:(h/2-to.y)/to.s};
+  const step = now => { let k = Math.min(1,(now-t0)/D); k = k<.5 ? 4*k*k*k : 1-Math.pow(-2*k+2,3)/2;
+    const s = Math.exp(l0+(l1-l0)*k), cx = c0.x+(c1.x-c0.x)*k, cy = c0.y+(c1.y-c0.y)*k;
+    cam = {s, x:w/2-cx*s, y:h/2-cy*s}; applyCam(); if (k<1) anim = requestAnimationFrame(step); };
+  anim = requestAnimationFrame(step);
+}
+const fitAll = ms => fly(camFor({x:0,y:0,w:world._w,h:world._h}, 1, 30), ms);
+function zoomAt(f, mx, my){ const s = Math.max(.04, Math.min(3, cam.s*f)); cam.x = mx-(mx-cam.x)*s/cam.s; cam.y = my-(my-cam.y)*s/cam.s; cam.s = s; applyCam(); }
+function worldRectOf(el){ const r = el.getBoundingClientRect(), v = vp.getBoundingClientRect(); return {x:(r.left-v.left-cam.x)/cam.s, y:(r.top-v.top-cam.y)/cam.s, w:r.width/cam.s, h:r.height/cam.s}; }
+const pts = new Map(); let moved = 0, last = null, pinch0 = null;
+vp.addEventListener("pointerdown", e => {
+  if (e.target.closest("#detail,.zoomui")) return;
+  cancelAnimationFrame(anim); pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  if (pts.size === 1){ moved = 0; last = {x:e.clientX, y:e.clientY}; }
+  if (pts.size === 2){ const [a,b] = [...pts.values()]; pinch0 = {d:Math.hypot(a.x-b.x,a.y-b.y), s:cam.s}; }
+});
+window.addEventListener("pointermove", e => {
+  if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  if (pts.size === 1 && last){ const dx = e.clientX-last.x, dy = e.clientY-last.y; moved += Math.abs(dx)+Math.abs(dy);
+    if (moved > 4) vp.classList.add("drag"); cam.x += dx; cam.y += dy; last = {x:e.clientX, y:e.clientY}; applyCam(); }
+  else if (pts.size === 2 && pinch0){ const [a,b] = [...pts.values()], d = Math.hypot(a.x-b.x,a.y-b.y), v = vp.getBoundingClientRect(); moved = 99;
+    zoomAt((pinch0.s*d/pinch0.d)/cam.s, (a.x+b.x)/2-v.left, (a.y+b.y)/2-v.top); }
+});
+const endP = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch0 = null; if (pts.size === 1){ const [a] = [...pts.values()]; last = {...a}; } if (!pts.size){ last = null; vp.classList.remove("drag"); } };
+window.addEventListener("pointerup", endP); window.addEventListener("pointercancel", endP);
+vp.addEventListener("click", e => { if (moved > 6 && !e.target.closest("#detail,.zoomui")){ e.stopPropagation(); e.preventDefault(); } moved = 0; }, true);
+vp.addEventListener("wheel", e => { if (e.target.closest("#detail")) return; e.preventDefault(); cancelAnimationFrame(anim);
+  const v = vp.getBoundingClientRect(), dy = e.deltaMode === 1 ? e.deltaY*16 : e.deltaY; zoomAt(Math.exp(-dy*(e.ctrlKey?.01:.0018)), e.clientX-v.left, e.clientY-v.top); }, {passive:false});
+const zoomBy = f => { const {w,h} = vpSize(), s = Math.max(.04, Math.min(3, cam.s*f)); fly({s, x:w/2-(w/2-cam.x)*s/cam.s, y:h/2-(h/2-cam.y)*s/cam.s}, 300); };
+$("#zin").onclick = () => zoomBy(1.5); $("#zout").onclick = () => zoomBy(1/1.5); $("#zfit").onclick = () => fitAll(600);
+world.addEventListener("click", e => {
+  if (world.dataset.lod === "far"){ const pl = e.target.closest(".plate"); if (pl){ goCat(+pl.id.split("-")[1]); return; } }
+  const b = e.target.closest(".ty"); if (b) openTy(b.dataset.id, false);
+});
+
+/* rail */
+let scaleFilter = new Set(), onlyDone = false;
+$("#scalechips").innerHTML = ESC.slice(1).map((s,i) => `<button class="chip" data-e="${i+1}" aria-pressed="false" title="${s.r}">${s.n}</button>`).join("");
+$("#scalechips").addEventListener("click", e => { const b = e.target.closest(".chip"); if (!b) return; const v = +b.dataset.e; scaleFilter.has(v) ? scaleFilter.delete(v) : scaleFilter.add(v); b.setAttribute("aria-pressed", scaleFilter.has(v)); markWorld(); });
+$("#onlydone").onclick = e => { onlyDone = !onlyDone; e.currentTarget.setAttribute("aria-pressed", onlyDone); markWorld(); };
+function renderRail(){ const ds = doneSet();
+  $("#cats").innerHTML = TAX.map(c => { const d = c.list.filter(o=>ds.has(o.id)).length; return `<li><button class="cat" data-cat="${c.i}"><span class="c">${esc(c.c)}</span><span>${esc(c.n)}</span><span class="k">${d?`<b>${d}</b>`:""}${c.list.length}</span></button></li>`; }).join(""); }
+$("#cats").addEventListener("click", e => { const b = e.target.closest(".cat"); if (b) goCat(+b.dataset.cat); });
+function goCat(i){ document.querySelectorAll(".cat").forEach(b => b.classList.toggle("on", +b.dataset.cat === i)); fly(camFor(TAX[i].box, 1.1, 30), 800); }
+let selected = null;
+function markWorld(){ const ds = doneSet();
+  ALL.forEach(o => { const el = document.getElementById("ty-" + o.id); if (!el) return;
+    el.classList.toggle("done", ds.has(o.id)); el.classList.toggle("sel", selected === o.id);
+    el.classList.toggle("dim", !!((scaleFilter.size && !scaleFilter.has(o.e)) || (onlyDone && !ds.has(o.id)))); }); }
+
+/* =========================================================
+   Volumetría esquemática
+   ========================================================= */
+function B(x,y,z,w,d,h,roof){ return {x,y,z,w,d,h,roof}; }
+function boxesFor(form, e){
+  const L = [];
+  switch(form){
+    case "casa": if (e<=1) L.push(B(0,0,0,2.2,1.4,1,"g")); else if (e==2) L.push(B(0,0,0,3.2,2,1.2,"g"), B(3.2,.4,0,1.8,1.6,1)); else L.push(B(0,0,0,4.5,2.4,1.4,"g"), B(0,2.4,0,1.8,2.6,1.3,"g"), B(4.5,.3,0,2.4,2,1.1)); break;
+    case "modulo": L.push(B(0,0,0,3,1.2,1.15)); if (e>=2) L.push(B(.4,1.4,0,3,1.2,1.15), B(.2,.2,1.15,3,1.2,1.15)); break;
+    case "bloque": { const w=[0,1.6,3,4.4,6,7][e], d=[0,1.2,2.2,3,4,5][e], h=[0,1,2,4,6.5,8][e]; L.push(B(0,0,0,w,d,h)); if (e>=5) L.push(B(w+1.2,0,0,w*.7,d,h*.7)); break; }
+    case "torre": { const h=[0,3,5,8,13,18][e]; L.push(B(0,0,0,5,4,1.4), B(1.2,.8,1.4,2.6,2.4,h)); if (e>=5) L.push(B(5.8,.4,0,2.4,2.4,h*.75)); break; }
+    case "nave": { const w=[0,2.5,4,7,11,15][e], d=[0,2,3,5,7,9][e]; L.push(B(0,0,0,w,d,[0,1,1.4,2,2.6,3][e]), B(-1.4,0,0,1.4,Math.min(d,2.2),[0,1,1.4,2.4,3,3.4][e])); break; }
+    case "campus": { const n = Math.max(2,e+1); for (let i=0;i<n;i++) L.push(B((i%3)*3.6, Math.floor(i/3)*3.4, 0, 2.6-(i%2)*.6, 2.2, 1+((i*7)%4)*.6)); break; }
+    case "abierto": { const s=[0,2,4,7,10,14][e]; L.push(B(0,0,0,s,s*.7,.06,"ground")); for (let i=0;i<3+e;i++) L.push(B(.6+(i*1.37%(s-1.2)), .5+(i*2.11%(s*.7-1)), .06, .35,.35,.7+(i%3)*.25,"tree")); L.push(B(s*.55,s*.3,.06,Math.max(.8,s*.15),Math.max(.6,s*.1),.5)); break; }
+    case "anillo": { const s=[0,3,5,8,11,14][e], t=s*.18, h=[0,.6,1,1.6,2.4,3.2][e]; L.push(B(0,0,0,s,s*.72,.04,"ground"), B(0,0,0,s,t,h), B(0,t,0,t,s*.72-2*t,h), B(s-t,t,0,t,s*.72-2*t,h*1.25), B(0,s*.72-t,0,s,t,h*1.25)); break; }
+    case "lineal": { const l=[0,4,7,11,15,20][e]; L.push(B(0,0,0,l,1.1,[0,.7,1,1.4,1.8,2][e])); if (e>=3) L.push(B(l*.35,1.1,0,1.4,1.6,1.2)); break; }
+    case "pabellon": { const w=[0,2,3.5,5,7,9][e], d=w*.7, h=[0,1,1.3,1.8,2.4,3][e]; [[0,0],[w-.15,0],[0,d-.15],[w-.15,d-.15]].forEach(([x,y]) => L.push(B(x,y,0,.15,.15,h))); L.push(B(w*.2,d*.25,0,w*.35,d*.4,h*.7), B(-.2,-.2,h,w+.4,d+.4,.18)); break; }
+    case "cupula": { const w=[0,2,3,4.5,6,8][e]; L.push(B(0,0,0,w,w*.8,w*.28), B(w*.2,w*.16,w*.28,w*.6,w*.48,w*.16), B(w*.33,w*.26,w*.44,w*.34,w*.28,w*.12), B(w*.45,w*.36,w*.56,w*.1,w*.08,w*.3)); break; }
+    case "mastil": { const h=[0,3,5,8,12,16][e]; L.push(B(0,0,0,2.4,2,.8), B(.9,.7,.8,.6,.6,h), B(.6,.4,.8+h,1.2,1.2,.6)); break; }
+    default: L.push(B(0,0,0,3,2,2));
+  }
+  return L;
+}
+function massing(form, e){
+  const L = boxesFor(form, e);
+  const C = Math.cos(Math.PI/6), Sn = Math.sin(Math.PI/6), P = (x,y,z) => [(x-y)*C, (x+y)*Sn-z];
+  L.sort((a,b) => (a.roof==="ground"?-1:0)-(b.roof==="ground"?-1:0) || (a.x+a.w/2+a.y+a.d/2+a.z*.01)-(b.x+b.w/2+b.y+b.d/2+b.z*.01));
+  const xs=[], ys=[], out=[];
+  const poly = (pts, cls) => { pts.forEach(p=>{xs.push(p[0]); ys.push(p[1]);}); out.push(`<polygon points="${pts.map(p=>p[0].toFixed(3)+","+p[1].toFixed(3)).join(" ")}" class="${cls}"/>`); };
+  L.forEach(b => { const {x,y,z,w,d,h} = b;
+    if (b.roof==="ground"){ poly([P(x,y,z),P(x+w,y,z),P(x+w,y+d,z),P(x,y+d,z)],"g"); return; }
+    if (b.roof==="tree"){ const c = P(x+w/2,y+d/2,z+h), r=.42; xs.push(c[0]-r,c[0]+r); ys.push(c[1]-r,c[1]+h); out.push(`<line x1="${c[0]}" y1="${c[1]+h}" x2="${c[0]}" y2="${c[1]}" class="e"/><circle cx="${c[0]}" cy="${c[1]}" r="${r}" class="tr"/>`); return; }
+    poly([P(x,y+d,z),P(x+w,y+d,z),P(x+w,y+d,z+h),P(x,y+d,z+h)],"l");
+    poly([P(x+w,y,z),P(x+w,y+d,z),P(x+w,y+d,z+h),P(x+w,y,z+h)],"r");
+    if (b.roof==="g"){ const rh=Math.min(d*.45,1.1), zc=z+h; poly([P(x,y,zc),P(x+w,y,zc),P(x+w,y+d/2,zc+rh),P(x,y+d/2,zc+rh)],"t"); poly([P(x,y+d/2,zc+rh),P(x+w,y+d/2,zc+rh),P(x+w,y+d,zc),P(x,y+d,zc)],"t2"); poly([P(x+w,y,zc),P(x+w,y+d/2,zc+rh),P(x+w,y+d,zc)],"r"); }
+    else poly([P(x,y,z+h),P(x+w,y,z+h),P(x+w,y+d,z+h),P(x,y+d,z+h)],"t"); });
+  const x0=Math.min(...xs), x1=Math.max(...xs), y0=Math.min(...ys), y1=Math.max(...ys), pw=(x1-x0)*.18+.5, ph=(y1-y0)*.18+.5;
+  return `<svg viewBox="${(x0-pw).toFixed(2)} ${(y0-ph).toFixed(2)} ${(x1-x0+2*pw).toFixed(2)} ${(y1-y0+2*ph).toFixed(2)}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Volumetría esquemática"><style>.t{fill:var(--m-top)}.t2{fill:var(--m-top);opacity:.85}.l{fill:var(--m-l)}.r{fill:var(--m-r)}.g{fill:var(--ground)}.tr{fill:var(--m-l)}polygon,circle,line{stroke:var(--acc);stroke-width:1.1;vector-effect:non-scaling-stroke;stroke-linejoin:round}</style>${out.join("")}</svg>`;
+}
+
+/* =========================================================
+   Proyección holográfica 3D (canvas)
+   ========================================================= */
+const CATFORM = {RES:["casa",3],HOS:["torre",4],COM:["nave",4],GAS:["pabellon",3],OFI:["torre",5],MIX:["torre",5],SAL:["bloque",4],EDU:["campus",4],CUL:["cupula",4],REL:["cupula",3],GOB:["bloque",5],SEG:["mastil",3],SOC:["casa",3],DEP:["anillo",5],PUB:["abierto",4],EVE:["nave",5],TRA:["lineal",5],IND:["nave",5],AGR:["nave",3],INF:["mastil",5],CIE:["cupula",3],EFI:["pabellon",2],FUT:["torre",5]};
+const HOLO = (function(){
+  const cache = {};
+  const BOXE = [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+  function model(form, e){
+    const k = form + e; if (cache[k]) return cache[k];
+    const V = [], E = [];
+    boxesFor(form, e).forEach(b => {
+      if (b.roof === "ground"){ const i = V.length; V.push([b.x,b.y,0],[b.x+b.w,b.y,0],[b.x+b.w,b.y+b.d,0],[b.x,b.y+b.d,0]); E.push([i,i+1,1],[i+1,i+2,1],[i+2,i+3,1],[i+3,i,1]); return; }
+      if (b.roof === "tree"){ const cx = b.x+b.w/2, cy = b.y+b.d/2, zc = b.z+b.h, r = .38, i = V.length;
+        V.push([cx,cy,b.z],[cx,cy,zc],[cx-r,cy,zc],[cx,cy-r,zc],[cx+r,cy,zc],[cx,cy+r,zc],[cx,cy,zc+r*1.3]);
+        E.push([i,i+1],[i+2,i+3],[i+3,i+4],[i+4,i+5],[i+5,i+2],[i+2,i+6],[i+3,i+6],[i+4,i+6],[i+5,i+6]); return; }
+      const i = V.length, {x,y,z,w,d,h} = b;
+      V.push([x,y,z],[x+w,y,z],[x+w,y+d,z],[x,y+d,z],[x,y,z+h],[x+w,y,z+h],[x+w,y+d,z+h],[x,y+d,z+h]);
+      BOXE.forEach(([a,c]) => E.push([i+a,i+c]));
+      if (b.roof === "g"){ const rh = Math.min(d*.45,1.1), j = V.length; V.push([x,y+d/2,z+h+rh],[x+w,y+d/2,z+h+rh]); E.push([j,j+1],[j,i+4],[j,i+7],[j+1,i+5],[j+1,i+6]); }
+      // líneas de piso (entrepisos) para dar lectura de escala
+      if (h > 2.2 && !b.roof){ const n = Math.min(12, Math.floor(h/1.1)); for (let f=1; f<n; f++){ const zz = z + h*f/n, q = V.length; V.push([x,y,zz],[x+w,y,zz],[x+w,y+d,zz],[x,y+d,zz]); E.push([q,q+1,2],[q+1,q+2,2],[q+2,q+3,2],[q+3,q,2]); } }
+    });
+    let a=Infinity,bx=-Infinity,c=Infinity,d=-Infinity,H=0; V.forEach(([x,y,z])=>{a=Math.min(a,x);bx=Math.max(bx,x);c=Math.min(c,y);d=Math.max(d,y);H=Math.max(H,z);});
+    const cx=(a+bx)/2, cy=(c+d)/2, P = V.map(([x,y,z])=>[x-cx,y-cy,z]); let R = .5; P.forEach(([x,y])=>R=Math.max(R,Math.hypot(x,y)));
+    return cache[k] = {P, E, R, H:Math.max(H,.3)};
+  }
+  let rgb = "56,225,255";
+  function setColor(){ rgb = (getComputedStyle(document.documentElement).getPropertyValue("--acc-rgb") || rgb).trim(); }
+  function draw(cv, m, ang, t, big){
+    const ctx = cv.getContext("2d"), W = cv.width, Hc = cv.height;
+    ctx.clearRect(0,0,W,Hc);
+    const el = .52, se = Math.sin(el), ce = Math.cos(el), pad = big ? .13 : .06;
+    const base = Hc*(1 - (big ? .1 : .08));
+    const sc = Math.min(W*(1-pad*2)/(2*m.R), (base - Hc*pad)/(m.H*ce + 2*m.R*se));
+    const cy0 = base - m.R*se*sc, cx0 = W/2, ca = Math.cos(ang), sa = Math.sin(ang);
+    // proyector: anillos y cono de luz
+    const rx = m.R*sc*1.05, ry = m.R*se*sc*1.05;
+    const g = ctx.createRadialGradient(cx0, cy0, 0, cx0, cy0, rx); g.addColorStop(0,`rgba(${rgb},.28)`); g.addColorStop(1,`rgba(${rgb},0)`);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(cx0, cy0, rx, ry, 0, 0, Math.PI*2); ctx.fill();
+    ctx.lineWidth = Math.max(1, W/300); ctx.strokeStyle = `rgba(${rgb},.55)`; ctx.beginPath(); ctx.ellipse(cx0, cy0, rx, ry, 0, 0, Math.PI*2); ctx.stroke();
+    if (big){ ctx.setLineDash([6,8]); ctx.lineDashOffset = -t*.02; ctx.strokeStyle = `rgba(${rgb},.35)`; ctx.beginPath(); ctx.ellipse(cx0, cy0, rx*1.18, ry*1.18, 0, 0, Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+      const cone = ctx.createLinearGradient(0, cy0, 0, cy0 - (m.H*ce*sc + ry)); cone.addColorStop(0,`rgba(${rgb},.16)`); cone.addColorStop(1,`rgba(${rgb},0)`);
+      ctx.fillStyle = cone; ctx.beginPath(); ctx.moveTo(cx0-rx, cy0); ctx.lineTo(cx0+rx, cy0); ctx.lineTo(cx0+rx*.9, cy0-m.H*ce*sc-ry); ctx.lineTo(cx0-rx*.9, cy0-m.H*ce*sc-ry); ctx.closePath(); ctx.fill(); }
+    const pr = m.P.map(([x,y,z]) => { const X = x*ca - y*sa, Y = x*sa + y*ca; return [cx0 + X*sc, cy0 + Y*se*sc - z*ce*sc, Y]; });
+    const lw = big ? Math.max(1.4, W/380) : Math.max(1, W/70);
+    // pasada de brillo
+    ctx.lineCap = "round";
+    ctx.strokeStyle = `rgba(${rgb},.16)`; ctx.lineWidth = lw*3.2; ctx.beginPath();
+    m.E.forEach(([a,b,k]) => { if (k) return; ctx.moveTo(pr[a][0],pr[a][1]); ctx.lineTo(pr[b][0],pr[b][1]); }); ctx.stroke();
+    // aristas con profundidad
+    m.E.forEach(([a,b,k]) => {
+      const depth = ((pr[a][2]+pr[b][2])/2 + m.R) / (2*m.R); // 0 fondo, 1 frente
+      const al = k===2 ? .22 + .2*depth : k===1 ? .3 : .35 + .6*depth;
+      ctx.strokeStyle = `rgba(${rgb},${al.toFixed(3)})`; ctx.lineWidth = k ? lw*.7 : lw;
+      if (k===1) ctx.setLineDash([lw*3, lw*3]);
+      ctx.beginPath(); ctx.moveTo(pr[a][0],pr[a][1]); ctx.lineTo(pr[b][0],pr[b][1]); ctx.stroke();
+      if (k===1) ctx.setLineDash([]);
+    });
+    if (big){
+      ctx.fillStyle = `rgba(255,255,255,.85)`; pr.forEach(p => { ctx.fillRect(p[0]-1, p[1]-1, 2, 2); });
+      // banda de escaneo
+      const top = cy0 - m.H*ce*sc - ry, bot = cy0 + ry, yb = bot - ((t*.00006) % 1) * (bot - top + 60);
+      const sg = ctx.createLinearGradient(0, yb-24, 0, yb+24); sg.addColorStop(0,`rgba(${rgb},0)`); sg.addColorStop(.5,`rgba(${rgb},.22)`); sg.addColorStop(1,`rgba(${rgb},0)`);
+      ctx.fillStyle = sg; ctx.fillRect(cx0 - rx*1.3, yb-24, rx*2.6, 48);
+      // líneas de barrido
+      ctx.fillStyle = `rgba(${rgb},.05)`; for (let yy = 0; yy < Hc; yy += 4) ctx.fillRect(0, yy, W, 1);
+    }
+  }
+  return {model, draw, setColor};
+})();
+(function holoLoop(){
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const visible = new Set();
+  let io = null;
+  function observe(){
+    if (!("IntersectionObserver" in window)) { document.querySelectorAll(".hg,.hgbig").forEach(c => visible.add(c)); return; }
+    io = new IntersectionObserver(ents => ents.forEach(en => en.isIntersecting ? visible.add(en.target) : visible.delete(en.target)), {root: vp, rootMargin: "80px"});
+    document.querySelectorAll(".hg,.hgbig").forEach(c => io.observe(c));
+  }
+  observe();
+  HOLO.setColor();
+  let lastT = 0, staticDone = false, lastAcc = "";
+  function frame(t){
+    requestAnimationFrame(frame);
+    if (t - lastT < 33) return; lastT = t;
+    const acc = document.documentElement.style.getPropertyValue("--acc-rgb"); if (acc !== lastAcc){ lastAcc = acc; HOLO.setColor(); staticDone = false; }
+    if (reduce){ if (t - (frame.ls||0) < 1000) return; frame.ls = t; }
+    const atlasOn = !$("#atlas").hidden, lod = world.dataset.lod;
+    if (atlasOn){
+      visible.forEach(cv => {
+        const big = cv.classList.contains("hgbig");
+        if (big ? lod !== "far" : lod === "far") return;
+        let m;
+        if (big){ const cf = CATFORM[cv.dataset.cat] || ["bloque",4]; m = HOLO.model(cf[0], cf[1]); }
+        else m = HOLO.model(cv.dataset.f, +cv.dataset.e);
+        const ph = +(cv.dataset.ph || 0) / 100;
+        HOLO.draw(cv, m, reduce ? .7 : t*(big ? .00025 : .0006) + ph, t, big);
+      });
+    }
+    const dcv = detail.classList.contains("open") && detail.querySelector(".hgd");
+    if (dcv){ HOLO.draw(dcv, HOLO.model(dcv.dataset.f, +dcv.dataset.e), reduce ? .7 : t*.0004, t, true); }
+  }
+  requestAnimationFrame(frame);
+})();
+
+/* =========================================================
+   Ficha de tipología
+   ========================================================= */
+const detail = $("#detail");
+let openSecs = new Set(["desc"]), addOpen = null, editProj = null, confirmDel = null;
+function openTy(id, fromOutside){
+  const o = BYID[id]; if (!o) return;
+  selected = id; addOpen = null; editProj = null; confirmDel = null;
+  const was = detail.classList.contains("open"); detail.classList.add("open");
+  renderDetail(); markWorld(); detail.querySelector(".db") && (detail.querySelector(".db").scrollTop = 0);
+  const el = document.getElementById("sub-" + o.sub.code);
+  if (fromOutside || !was) requestAnimationFrame(() => fly(camFor(worldRectOf(el), 1.1, 40), fromOutside ? 1100 : 600));
+}
+function closeDetail(){ detail.classList.remove("open","full"); selected = null; markWorld(); }
+(function(){
+  const LSW = "atlas-dsize"; let sz = {}; try { sz = JSON.parse(localStorage.getItem(LSW) || "{}"); } catch(e){}
+  const apply = () => { if (window.innerWidth <= 900) { detail.style.width = ""; detail.style.bottom = ""; return; } if (sz.w) detail.style.width = sz.w + "px"; if (sz.h) detail.style.bottom = Math.max(0, vp.clientHeight - sz.h) + "px"; };
+  apply(); window.addEventListener("resize", apply);
+  let drag = null;
+  detail.addEventListener("pointerdown", e => {
+    const g = e.target.closest(".grip,.gripv"); if (!g || window.innerWidth <= 900) return;
+    e.preventDefault(); drag = {v: g.classList.contains("gripv"), x:e.clientX, y:e.clientY, w:detail.offsetWidth, h:detail.offsetHeight, id:e.pointerId};
+    detail.classList.add("resizing"); try { g.setPointerCapture(e.pointerId); } catch(_){}
+  });
+  detail.addEventListener("pointermove", e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    if (drag.v){ sz.h = Math.max(320, Math.min(vp.clientHeight, drag.h + (e.clientY - drag.y))); }
+    else { sz.w = Math.max(380, Math.min(vp.clientWidth - 120, drag.w - (e.clientX - drag.x))); }
+    apply();
+  });
+  const end = e => { if (!drag) return; drag = null; detail.classList.remove("resizing"); try { localStorage.setItem(LSW, JSON.stringify(sz)); } catch(_){} };
+  detail.addEventListener("pointerup", end); detail.addEventListener("pointercancel", end);
+  detail.addEventListener("dblclick", e => { if (e.target.closest(".grip,.gripv")){ sz = {}; detail.style.width = ""; detail.style.bottom = ""; try { localStorage.removeItem(LSW); } catch(_){} } });
+})();
+function tipoDoc(id){ return S.tipos[id] || {}; }
+async function saveTipo(id, patch){ const cur = tipoDoc(id); const next = {...cur, ...patch}; S.tipos[id] = next; return safe(() => Store.set("tipos", id, next)); }
+
+function sec(key, icon, title, count, inner){
+  return `<details class="acc" data-sec="${key}" ${openSecs.has(key)?"open":""}><summary><span class="ic">${icon}</span><span class="tt">${title}</span>${count!=null?`<span class="cnt">${count}</span>`:""}</summary><div class="in">${inner}</div></details>`;
+}
+function addBlock(key, fields, label){
+  if (!S.canWrite) return "";
+  if (addOpen !== key) return `<button class="btn sm addtoggle" data-add="${key}">${ICON.plus} ${label}</button>`;
+  return `<form class="addf" data-addform="${key}">${fields}<div class="row" style="justify-content:flex-end;flex:none"><button type="button" class="btn sm ghost" data-add="">Cancelar</button><button class="btn sm pri">Guardar</button></div></form>`;
+}
+function renderDetail(){
+  const o = BYID[selected]; if (!o){ detail.innerHTML = ""; return; }
+  const keepTop = renderDetail.last === selected ? (detail.querySelector(".db")?.scrollTop || 0) : 0; renderDetail.last = selected;
+  const fi = o.fi || {}, td = tipoDoc(o.id), ds = doneSet(), E = ESC[o.e];
+  const mine = S.projects.filter(p => p.tipo === o.id).sort((a,b)=>String(a.anio||"9999").localeCompare(String(b.anio||"9999")));
+  const cover = coverOf(o);
+  const R = CT.reglas(o);
+  const myC = td.contratos || [], myQ = td.faq || [], myP = td.pros || [], myN = td.cons || [], myI = td.info || [];
+  const baseQ = fi.q || [], baseP = fi.p || [], baseN = fi.c || [], baseI = [...(o.k||[]), ...(fi.i||[])];
+  const pend = !o.fi ? `<p class="pending">Contenido detallado en preparación para esta tipología.</p>` : "";
+  const ed = editProj ? S.projects.find(p=>p.id===editProj) : null;
+
+  const desc = `
+    <div class="qa"><h5>¿Qué es?</h5><p>${esc(o.d)}</p></div>
+    ${fi.w ? `<div class="qa"><h5>¿Para qué sirve y quién la usa?</h5><p>${esc(fi.w)}</p></div>` : ""}
+    ${fi.f ? `<div class="qa"><h5>¿Cómo funciona?</h5><p>${esc(fi.f)}</p></div>` : ""}
+    ${o.x ? `<div class="qa"><h5>¿En qué se diferencia?</h5><p>${esc(o.x)}</p></div>` : ""}
+    <div class="qa"><h5>¿Qué tamaño tiene?</h5><p>Escala ${E.n.toLowerCase()} (${E.r}). ${esc(E.d)}</p></div>
+    ${o.ec ? `<div class="ecn"><b>En Ecuador · </b>${esc(o.ec)}</div>` : ""}`;
+
+  const contracts = `
+    <div class="hl"><b>${R.items.length <= 3 ? "Pocos contratos · " : ""}${R.items.length} documentos sugeridos.</b> ${esc(R.nota)}</div>
+    ${R.items.map(it => { const c = CT.L[it.c]; return `<details class="ct"><summary><span class="code">${it.c}</span><span class="nm">${esc(c.n)}<span class="cond">${esc(it.cond || c.r)}</span></span><span class="opt">${it.cond ? "Según el caso" : "Necesario"}</span></summary>
+      <div class="body"><pre>${esc(c.t)}</pre><div class="acts"><button class="btn sm" data-copy="${it.c}">Copiar texto</button>${downloads ? `<button class="btn sm" data-dl="${it.c}">Descargar .txt</button>` : ""}</div></div></details>`; }).join("")}
+    ${myC.map((c,i) => `<details class="ct mine"><summary><span class="code">MÍO</span><span class="nm">${esc(c.n)}<span class="cond">Agregado por ti</span></span><span class="opt"></span></summary>
+      <div class="body"><pre>${esc(c.t || "Sin texto.")}</pre><div class="acts"><button class="btn sm" data-copymine="${i}">Copiar texto</button>${downloads ? `<button class="btn sm" data-dlmine="${i}">Descargar .txt</button>` : ""}${S.canWrite ? `<button class="btn sm danger" data-rm="contratos:${i}">Quitar</button>` : ""}</div></div></details>`).join("")}
+    ${addBlock("contratos", `<label class="fl">Tipo de contrato<input id="a-n" required placeholder="Ej. Contrato de paisajismo"></label><label class="fl">Texto del contrato (opcional)<textarea id="a-t" rows="6" placeholder="Pega o escribe el contrato"></textarea></label>`, "Agregar tipo de contrato")}`;
+
+  const PL = window.PEDIR ? PEDIR.lista(o) : [], myD = td.pedir || [];
+  const byF = {}; PL.forEach(x => (byF[x[0]] = byF[x[0]] || []).push(x));
+  const pedir = `<div class="hl"><b>En este orden.</b> Pide primero lo que te permite verificar la propiedad y la normativa: sin eso el diseño puede no ser aprobado.</div>
+    <div class="ped">${Object.keys(byF).map(f => `<div><h6>${pad(f)} · ${esc(PEDIR.FASES[f])}</h6><ol>${byF[f].map(x => `<li><div><b>${esc(x[1])}</b><span>${esc(x[2])}</span></div><span></span></li>`).join("")}</ol></div>`).join("")}
+    ${myD.length ? `<div><h6 style="color:var(--done)">Agregado por ti</h6><ol>${myD.map((x,i) => `<li class="mine"><div><b>${esc(x.t)}</b><span>${esc(x.w||"")}</span></div>${S.canWrite ? `<button class="del" data-rm="pedir:${i}" aria-label="Quitar">×</button>` : "<span></span>"}</li>`).join("")}</ol></div>` : ""}</div>
+    <div class="acts"><button class="btn sm" data-copyped>Copiar lista</button></div>
+    ${addBlock("pedir", `<label class="fl">Qué pedir<input id="a-dt" required placeholder="Ej. Certificado de no adeudar al municipio"></label><label class="fl">Para qué sirve (opcional)<input id="a-dw"></label>`, "Agregar requisito")}`;
+  const faq = `${pend}
+    ${baseQ.map(([q,a]) => `<details class="faq"><summary>${esc(q)}</summary><div class="a">${esc(a)}</div></details>`).join("")}
+    ${myQ.map((x,i) => `<details class="faq mine"><summary>${esc(x.q)}</summary><div class="a">${esc(x.a || "Sin respuesta aún.")}${S.canWrite ? ` <button class="del" data-rm="faq:${i}" aria-label="Quitar">×</button>` : ""}</div></details>`).join("")}
+    ${addBlock("faq", `<label class="fl">Pregunta<input id="a-q" required placeholder="¿…?"></label><label class="fl">Respuesta<textarea id="a-a" rows="3"></textarea></label>`, "Agregar pregunta")}`;
+
+  const li = (arr, mineArr, key) => `<ul class="list">${arr.map(t => `<li><span>${esc(t)}</span><span></span></li>`).join("")}${mineArr.map((t,i) => `<li class="mine"><span>${esc(t)}</span>${S.canWrite ? `<button class="del" data-rm="${key}:${i}" aria-label="Quitar">×</button>` : "<span></span>"}</li>`).join("")}</ul>`;
+  const pros = `${pend}<div class="pc2"><div class="pro"><h6>Pros</h6>${li(baseP, myP, "pros")}</div><div class="con"><h6>Contras</h6>${li(baseN, myN, "cons")}</div></div>
+    ${addBlock("pc", `<div class="row"><select id="a-k"><option value="pros">Pro</option><option value="cons">Contra</option></select><input id="a-v" required placeholder="Escribe el pro o el contra"></div>`, "Agregar pro o contra")}`;
+  const info = `${li(baseI, myI, "info")}${addBlock("info", `<label class="fl">Información<textarea id="a-i" rows="3" required></textarea></label>`, "Agregar información")}`;
+
+  const projForm = S.canWrite ? `<form class="form" id="pform">
+      <label>Nombre del proyecto<input id="f-nombre" value="${esc(ed?.nombre||"")}" placeholder="Ej. Casa Ríos"></label>
+      <label>Año<input id="f-anio" inputmode="numeric" maxlength="4" value="${esc(ed?.anio||"")}" placeholder="2025"></label>
+      <label class="full">Ciudad / ubicación<input id="f-ciudad" value="${esc(ed?.ciudad||"")}" placeholder="Ej. Cuenca, Azuay"></label>
+      <div class="fa">${ed ? `<button type="button" class="btn sm ghost" id="fcancel">Cancelar</button><button class="btn sm pri">Guardar cambios</button>` : `<button class="btn sm done">${mine.length ? "Añadir otro proyecto" : "Marcar como realizada"}</button>`}</div>
+    </form>` : "";
+  const projs = `<div class="mine2">${mine.map(p => `<div class="prow"><div class="th" style="${p.portada ? `background-image:url('${esc(blobUrl(p.portada))}')` : ""}"></div><div><b>${p.nombre ? esc(p.nombre) : "Sin nombre"}</b><span>${[p.anio, p.ciudad].filter(Boolean).map(esc).join(" · ") || "Sin año ni ciudad"}</span></div>
+      <div class="acts"><button class="btn sm pri" data-proj="${esc(p.id)}">Diseño</button>${S.canWrite ? (confirmDel===p.id ? `<button class="btn sm danger" data-pdel="${esc(p.id)}">Quitar</button><button class="btn sm ghost" data-pnodel="1">No</button>` : `<button class="btn sm ghost" data-pedit="${esc(p.id)}">Editar</button><button class="del" data-paskdel="${esc(p.id)}" aria-label="Quitar">×</button>`) : ""}</div></div>`).join("") || `<div class="ro">Aún no la has marcado como realizada.</div>`}${projForm}</div>`;
+
+  detail.innerHTML = `
+    <div class="grip" title="Arrastra para cambiar el ancho"></div><div class="gripv" title="Arrastra para cambiar el alto"></div>
+    <div class="dh"><div><div class="bc">${esc(o.code)} <span>· ${esc(o.cat.n)} › ${esc(o.sub.n)}</span></div><h2>${esc(o.n)}</h2></div><div class="hb"><button class="iconbtn" id="dfull" aria-label="${detail.classList.contains("full") ? "Salir de pantalla completa" : "Pantalla completa"}" title="${detail.classList.contains("full") ? "Salir de pantalla completa" : "Pantalla completa"}">${detail.classList.contains("full") ? "⤡" : "⤢"}</button><button class="iconbtn x" id="dclose" aria-label="Cerrar ficha">✕</button></div></div>
+    <div class="db">
+      <figure class="media" style="margin-top:0">
+        ${cover ? `<img src="${esc(blobUrl(cover))}" alt="Render de ${esc(o.n)}" data-lb="${esc(cover)}">` : `<div class="iso"><canvas class="hgd" width="1000" height="500" data-f="${o.f}" data-e="${o.e}" aria-hidden="true"></canvas></div><span class="cap">Proyección holográfica esquemática · sube tu imagen o render</span>`}
+        <span class="sc2">${dots(o.e)}<b>${E.n}</b>${E.r}</span>
+        <div class="corner">${S.canWrite ? `<button class="btn sm" id="upcover">${ICON.cam} ${cover ? "Cambiar imagen" : "Subir imagen o render"}</button>` : ""}${cover && S.canWrite && tipoDoc(o.id).portada ? `<button class="btn sm ghost" id="rmcover" aria-label="Quitar imagen">✕</button>` : ""}</div>
+        <button class="dsg" id="dsg">DISEÑO ${ICON.arrow}</button>
+      </figure>
+      <div class="acts">${S.canWrite ? `<button class="btn pri" id="startses">${ICON.user} Iniciar con cliente</button>` : ""}${ds.has(o.id) ? `<span class="chip dn" aria-pressed="true">Realizada</span>` : ""}</div>
+      ${sec("desc", ICON.info, "Descripción", null, desc)}
+      ${sec("ped", ICON.doc, "Qué pedirle al cliente", PL.length + myD.length, pedir)}
+      ${sec("ct", ICON.doc, "Contratos", R.items.length + myC.length, contracts)}
+      ${sec("faq", ICON.q, "Preguntas frecuentes del cliente", baseQ.length + myQ.length, faq)}
+      ${sec("pc", ICON.pm, "Pros y contras", baseP.length + baseN.length + myP.length + myN.length, pros)}
+      ${sec("info", ICON.star, "Información relevante", baseI.length + myI.length, info)}
+      ${sec("mine", ICON.star, "Mis proyectos de esta tipología", mine.length, projs)}
+      <div><div class="lbl" style="margin-bottom:8px">Otras tipologías de ${esc(o.sub.n)}</div><div class="sibs">${o.sub.list.filter(s=>s!==o).map(s=>`<button class="chip ${ds.has(s.id)?"dn":""}" aria-pressed="${ds.has(s.id)}" data-open="${esc(s.id)}">${esc(s.n)}</button>`).join("")}</div></div>
+    </div>`;
+  detail.querySelector(".db").scrollTop = keepTop;
+  const f = $("#pform"); if (f) f.addEventListener("submit", onProjSubmit);
+  detail.querySelectorAll("form[data-addform]").forEach(fm => fm.addEventListener("submit", onAddSubmit));
+  const first = detail.querySelector("form[data-addform] input, form[data-addform] textarea"); if (first) first.focus();
+}
+detail.addEventListener("toggle", e => { const d = e.target; if (d.classList && d.classList.contains("acc")){ d.open ? openSecs.add(d.dataset.sec) : openSecs.delete(d.dataset.sec); } }, true);
+async function onProjSubmit(ev){
+  ev.preventDefault(); const o = BYID[selected]; const anio = $("#f-anio").value.trim();
+  if (anio && !/^\d{4}$/.test(anio)){ toast("El año debe tener 4 dígitos, por ejemplo 2024."); return; }
+  const ed = editProj ? S.projects.find(p=>p.id===editProj) : null;
+  const p = {...(ed||{}), tipo:o.id, nombre:$("#f-nombre").value.trim(), anio, ciudad:$("#f-ciudad").value.trim(), t: ed?.t || Date.now()}; delete p.id;
+  const id = ed ? ed.id : uid("p");
+  if (await safe(() => Store.set("proyectos", id, p), ed ? "Proyecto actualizado" : "Marcada como realizada")){ editProj = null; openSecs.add("mine"); renderDetail(); }
+}
+async function onAddSubmit(ev){
+  ev.preventDefault(); const k = ev.target.dataset.addform, o = BYID[selected], td = tipoDoc(o.id);
+  let patch = null;
+  if (k === "contratos") patch = {contratos:[...(td.contratos||[]), {n:$("#a-n").value.trim(), t:$("#a-t").value}]};
+  if (k === "faq") patch = {faq:[...(td.faq||[]), {q:$("#a-q").value.trim(), a:$("#a-a").value.trim()}]};
+  if (k === "pc"){ const kk = $("#a-k").value; patch = {[kk]:[...(td[kk]||[]), $("#a-v").value.trim()]}; }
+  if (k === "info") patch = {info:[...(td.info||[]), $("#a-i").value.trim()]};
+  if (k === "pedir") patch = {pedir:[...(td.pedir||[]), {t:$("#a-dt").value.trim(), w:$("#a-dw").value.trim()}]};
+  if (patch && await saveTipo(o.id, patch)){ addOpen = null; toast("Agregado"); renderDetail(); }
+}
+async function copyText(t){ try { await navigator.clipboard.writeText(t); toast("Texto copiado"); } catch(e){ toast("No se pudo copiar: selecciona el texto y cópialo manualmente."); } }
+async function saveTxt(name, text){ if (!downloads) return; try { await downloads.save({filename: name.replace(/[\\/:*?"<>|]/g,"") + ".txt", data: text}); } catch(e){ if (e && e.code !== "declined") toast("No se pudo descargar el archivo."); } }
+detail.addEventListener("click", async e => {
+  const t = e.target.closest("button,[data-lb]"); if (!t) return;
+  const o = BYID[selected], td = tipoDoc(o?.id);
+  if (t.id === "dclose") return closeDetail();
+  if (t.id === "dfull"){ detail.classList.toggle("full"); renderDetail(); return; }
+  if (t.dataset.copyped !== undefined){ const L = PEDIR.lista(o); return copyText(`QUÉ PEDIRLE AL CLIENTE — ${o.n}\n\n` + L.map((x,i)=>`${i+1}. ${x[1]}`).concat((td.pedir||[]).map((x,i)=>`${L.length+i+1}. ${x.t}`)).join("\n")); }
+  if (t.dataset.open) return openTy(t.dataset.open, false);
+  if (t.dataset.add !== undefined){ addOpen = t.dataset.add || null; renderDetail(); return; }
+  if (t.dataset.copy) return copyText(CT.L[t.dataset.copy].t);
+  if (t.dataset.dl) return saveTxt(CT.L[t.dataset.dl].n + " - " + o.n, CT.L[t.dataset.dl].t);
+  if (t.dataset.copymine) return copyText(td.contratos[+t.dataset.copymine].t || "");
+  if (t.dataset.dlmine) { const c = td.contratos[+t.dataset.dlmine]; return saveTxt(c.n, c.t || ""); }
+  if (t.dataset.rm){ const [k,i] = t.dataset.rm.split(":"); const arr = [...(td[k]||[])]; arr.splice(+i,1); if (await saveTipo(o.id, {[k]:arr})) renderDetail(); return; }
+  if (t.dataset.proj) return openProject(t.dataset.proj);
+  if (t.dataset.pedit){ editProj = t.dataset.pedit; confirmDel = null; renderDetail(); return; }
+  if (t.id === "fcancel"){ editProj = null; renderDetail(); return; }
+  if (t.dataset.paskdel){ confirmDel = t.dataset.paskdel; renderDetail(); return; }
+  if (t.dataset.pnodel){ confirmDel = null; renderDetail(); return; }
+  if (t.dataset.pdel){ const id = t.dataset.pdel; confirmDel = null; await safe(() => Store.del("proyectos", id), "Proyecto quitado"); renderDetail(); return; }
+  if (t.id === "upcover"){ const fs = await pickFiles("image/*"); if (!fs.length) return; const [r] = await uploadFiles(fs); if (r && await saveTipo(o.id, {portada:r.id})){ toast("Imagen guardada"); renderDetail(); renderHome(); } return; }
+  if (t.id === "rmcover"){ if (await saveTipo(o.id, {portada:""})) renderDetail(); return; }
+  if (t.dataset.lb) return lightbox(t.dataset.lb, o);
+  if (t.id === "dsg") return goDesign(o);
+  if (t.id === "startses") return newSession(o.id);
+});
+function lightbox(id, o){
+  const d = document.createElement("div"); d.className = "lb";
+  d.innerHTML = `<img src="${esc(blobUrl(id))}" alt=""><div class="corner"><button class="btn pri" data-lbd>DISEÑO ${ICON.arrow}</button><button class="btn" data-lbx>Cerrar</button></div>`;
+  d.addEventListener("click", e => { if (e.target.closest("[data-lbd]")){ d.remove(); goDesign(o); } else if (e.target === d || e.target.closest("[data-lbx]")) d.remove(); });
+  document.body.appendChild(d);
+}
+async function goDesign(o){
+  const mine = S.projects.filter(p => p.tipo === o.id);
+  if (mine.length === 1) return openProject(mine[0].id);
+  if (mine.length > 1){
+    const m = modal(`<h2>Elige el proyecto</h2><div class="mine2">${mine.map(p=>`<button class="btn" data-pick="${esc(p.id)}" style="justify-content:space-between">${esc(p.nombre||"Sin nombre")} <span class="ro">${esc(p.anio||"")}</span></button>`).join("")}</div>`);
+    m.addEventListener("click", e => { const b = e.target.closest("[data-pick]"); if (b){ m.remove(); openProject(b.dataset.pick); } });
+    return;
+  }
+  if (!S.canWrite){ toast("Todavía no hay un proyecto publicado para esta tipología."); return; }
+  const id = uid("p"), p = {tipo:o.id, nombre:"", anio:"", ciudad:"", t:Date.now(), portada: tipoDoc(o.id).portada || ""};
+  if (await safe(() => Store.set("proyectos", id, p))){ S.projects.find(x=>x.id===id) || S.projects.push({...p, id}); openProject(id, true); }
+}
+function modal(inner){
+  const m = document.createElement("div"); m.className = "modal";
+  m.innerHTML = `<div class="mbox hud">${inner}<div class="acts" style="justify-content:flex-end"><button class="btn ghost" data-mx>Cerrar</button></div></div>`;
+  m.addEventListener("click", e => { if (e.target === m || e.target.closest("[data-mx]")) m.remove(); });
+  document.body.appendChild(m); return m;
+}
+
+/* =========================================================
+   Página de proyecto (proceso de diseño, renders, planos, videos)
+   ========================================================= */
+let curProj = null, projEdit = false;
+const MKIND = {render:"Renders", plano:"Planos", video:"Videos", doc:"Documentos (PDF)", obra:"Fotos de obra"};
+function openProject(id, edit){ curProj = id; projEdit = !!edit && S.canWrite; renderProject(); }
+function closeOverlay(){ if (sesPending){ const sid = sesPending; sesPending = null; writeSes(sid); } $("#overlay").innerHTML = ""; curProj = null; curSes = null; refresh(); }
+function projPatch(patch, pid){ pid = pid || curProj; const p = S.projects.find(x=>x.id===pid); if (!p) return; Object.assign(p, patch); const {id, ...data} = p; return safe(() => Store.set("proyectos", pid, data)); }
+function renderProject(){
+  const p = S.projects.find(x=>x.id===curProj); if (!p){ $("#overlay").innerHTML = ""; return; }
+  const keepTop = renderProject.last === curProj ? ($("#overlay .ovb")?.scrollTop || 0) : 0; renderProject.last = curProj;
+  const o = BYID[p.tipo], cover = p.portada || (o ? coverOf(o) : ""), media = p.media || [], steps = p.pasos || [];
+  const gal = kind => { const items = media.map((m,i)=>({...m,i})).filter(m=>m.k===kind);
+    return `<div class="gal">${items.map(m => `<div class="gi">${/^video\//.test(m.ct) ? `<video src="${esc(blobUrl(m.id))}" controls preload="metadata"></video>` : /pdf/.test(m.ct) ? `<a class="doc" href="${esc(blobUrl(m.id))}" target="_blank" rel="noopener">${ICON.doc}<span>Abrir PDF</span></a>` : `<img src="${esc(blobUrl(m.id))}" alt="${esc(m.cap||"")}" data-zoom="${esc(m.id)}" loading="lazy">`}
+      <div class="cp"><span>${esc(m.cap || m.name || "")}</span>${projEdit ? `<button class="del" data-mcap="${m.i}" title="Editar descripción">✎</button><button class="del" data-mrm="${m.i}" aria-label="Quitar">×</button>` : ""}</div></div>`).join("")}
+      ${projEdit ? `<div class="drop" data-drop="${kind}">Arrastra archivos aquí o <button class="btn sm" data-up="${kind}">${ICON.plus} Subir ${MKIND[kind].toLowerCase()}</button><span class="ro">JPG, PNG, WEBP, MP4, WEBM o PDF · máx. 20 MB c/u</span></div>` : ""}</div>`; };
+  const kinds = Object.keys(MKIND).filter(k => projEdit || media.some(m=>m.k===k));
+  $("#overlay").innerHTML = `<div class="ov">
+    <div class="ovh"><button class="iconbtn" data-close aria-label="Volver">←</button><div class="ttl"><small>${o ? esc(o.code + " · " + o.n) : "Proyecto"}</small><b>${esc(p.nombre || "Proyecto sin nombre")}</b></div>
+      ${o ? `<button class="btn sm ghost" data-toty="${esc(o.id)}">Ver tipología</button>` : ""}${S.canWrite ? `<button class="btn sm ${projEdit?"pri":""}" data-pedit>${projEdit ? "Listo" : "Editar página"}</button>` : ""}</div>
+    <div class="ovb"><div class="pp">
+      <div class="pp-hero" style="${cover ? `background-image:url('${esc(blobUrl(cover))}')` : ""}"><div class="in">
+        <div><div class="m">${o ? esc(o.cat.n + " › " + o.n) : ""}</div><h1>${esc(p.nombre || "Proyecto sin nombre")}</h1><div class="ro" style="margin-top:6px">${[p.anio, p.ciudad].filter(Boolean).map(esc).join(" · ")}</div></div>
+        ${projEdit ? `<button class="btn" data-up="portada">${ICON.cam} ${cover ? "Cambiar portada" : "Subir portada"}</button>` : ""}</div></div>
+      ${projEdit ? `<div class="pp-sec"><h2>Datos</h2><div class="grid2">
+        <label class="fl">Nombre<input data-pf="nombre" value="${esc(p.nombre||"")}"></label>
+        <label class="fl">Año<input data-pf="anio" value="${esc(p.anio||"")}" maxlength="4" inputmode="numeric"></label>
+        <label class="fl">Ciudad / ubicación<input data-pf="ciudad" value="${esc(p.ciudad||"")}"></label>
+        <label class="fl">Área (m²)<input data-pf="area" value="${esc(p.area||"")}" inputmode="decimal"></label>
+        <label class="fl">Estado<select data-pf="estado">${["Anteproyecto","Proyecto definitivo","En construcción","Construido","Académico","Concurso"].map(s=>`<option ${p.estado===s?"selected":""}>${s}</option>`).join("")}</select></label></div></div>` : (p.area || p.estado ? `<div class="pp-sec"><div class="acts">${p.estado?`<span class="chip">${esc(p.estado)}</span>`:""}${p.area?`<span class="chip">${esc(p.area)} m²</span>`:""}</div></div>` : "")}
+      <div class="pp-sec"><h2><span class="n">01</span> Concepto</h2>
+        ${projEdit ? `<textarea data-pf="concepto" rows="5" placeholder="Idea rectora, emplazamiento, decisiones clave…">${esc(p.concepto||"")}</textarea>` : `<p style="margin:0;max-width:72ch;white-space:pre-wrap">${esc(p.concepto || "Sin concepto escrito todavía.")}</p>`}</div>
+      <div class="pp-sec"><h2><span class="n">02</span> Proceso de diseño</h2>
+        <div class="steps">${steps.map((s,i) => `<div class="step hud"><div>${projEdit ? `<input data-sf="${i}:t" value="${esc(s.t||"")}" placeholder="Título del paso" style="margin-bottom:6px"><textarea data-sf="${i}:x" rows="3" placeholder="Qué hiciste en este paso">${esc(s.x||"")}</textarea><div class="sa"><button class="btn sm ghost" data-smv="${i}:-1">↑</button><button class="btn sm ghost" data-smv="${i}:1">↓</button><button class="btn sm danger" data-srm="${i}">Quitar</button></div>` : `<h4>${esc(s.t||"")}</h4><p>${esc(s.x||"")}</p>`}</div></div>`).join("") || (projEdit ? "" : `<p class="ro">Aún no se ha documentado el proceso.</p>`)}</div>
+        ${projEdit ? `<div class="acts"><button class="btn sm" data-sadd>${ICON.plus} Agregar paso</button>${!steps.length ? `<button class="btn sm ghost" data-sbase>Usar pasos sugeridos</button>` : ""}</div>` : ""}</div>
+      ${kinds.map((k,i) => `<div class="pp-sec"><h2><span class="n">${pad(i+3)}</span> ${MKIND[k]}</h2>${gal(k)}</div>`).join("")}
+    </div></div></div>`;
+  $("#overlay .ovb").scrollTop = keepTop;
+  wireDrops();
+}
+function wireDrops(){
+  document.querySelectorAll("[data-drop]").forEach(d => {
+    d.addEventListener("dragover", e => { e.preventDefault(); d.classList.add("on"); });
+    d.addEventListener("dragleave", () => d.classList.remove("on"));
+    d.addEventListener("drop", async e => { e.preventDefault(); d.classList.remove("on"); await addMedia(d.dataset.drop, [...e.dataTransfer.files]); });
+  });
+}
+async function addMedia(kind, files){
+  if (!files.length) return; toast("Subiendo " + files.length + " archivo(s)…");
+  const up = await uploadFiles(files); if (!up.length) return;
+  const p = S.projects.find(x=>x.id===curProj);
+  if (kind === "portada"){ await projPatch({portada: up[0].id}); }
+  else await projPatch({media:[...(p.media||[]), ...up.map(u => ({id:u.id, ct:u.ct, name:u.name, k:kind, cap:""}))]});
+  renderProject();
+}
+const STEP_BASE = ["Programa arquitectónico","Análisis del terreno y normativa","Diagramas de relaciones y zonificación","Concepto y partido arquitectónico","Anteproyecto","Proyecto definitivo y detalles","Renders y presentación"];
+const projText = debounce((field, val, pid) => projPatch({[field]: val}, pid), 900);
+const stepText = debounce(pid => { const p = S.projects.find(x=>x.id===pid); if (p) projPatch({pasos:p.pasos}, pid); }, 900);
+$("#overlay").addEventListener("input", e => {
+  const t = e.target;
+  if (t.dataset.pf && curProj){ const p = S.projects.find(x=>x.id===curProj); p[t.dataset.pf] = t.value; projText(t.dataset.pf, t.value, curProj); }
+  if (t.dataset.sf && curProj){ const [i,k] = t.dataset.sf.split(":"); const p = S.projects.find(x=>x.id===curProj); p.pasos[+i][k] = t.value; stepText(curProj); }
+});
+$("#overlay").addEventListener("change", e => { const t = e.target; if (t.dataset.pf && t.tagName === "SELECT" && curProj) projPatch({[t.dataset.pf]: t.value}); });
+$("#overlay").addEventListener("click", async e => {
+  const t = e.target.closest("button,img[data-zoom]"); if (!t) return;
+  if (t.dataset.close !== undefined) return closeOverlay();
+  if (!curProj) return;
+  const p = S.projects.find(x=>x.id===curProj);
+  if (t.dataset.pedit !== undefined){ projEdit = !projEdit; renderProject(); return; }
+  if (t.dataset.toty){ closeOverlay(); show("atlas", {keep:true}); openTy(t.dataset.toty, true); return; }
+  if (t.dataset.up){ const k = t.dataset.up; const fs = await pickFiles(k==="portada"||k==="render"||k==="obra" ? "image/*" : k==="plano" ? "image/*,application/pdf" : k==="video" ? "video/mp4,video/webm" : "application/pdf,image/*", k !== "portada"); return addMedia(k, fs); }
+  if (t.dataset.mrm){ const m = [...(p.media||[])]; m.splice(+t.dataset.mrm,1); await projPatch({media:m}); renderProject(); return; }
+  if (t.dataset.mcap){ const i = +t.dataset.mcap; const box = modal(`<h2>Descripción del archivo</h2><input id="capin" value="${esc(p.media[i].cap||"")}" placeholder="Ej. Fachada norte al atardecer"><button class="btn pri" id="capok" style="align-self:flex-end">Guardar</button>`);
+    box.querySelector("#capok").onclick = async () => { const m = [...p.media]; m[i] = {...m[i], cap: box.querySelector("#capin").value}; box.remove(); await projPatch({media:m}); renderProject(); }; return; }
+  if (t.dataset.sadd !== undefined){ await projPatch({pasos:[...(p.pasos||[]), {t:"",x:""}]}); renderProject(); return; }
+  if (t.dataset.sbase !== undefined){ await projPatch({pasos: STEP_BASE.map(s=>({t:s,x:""}))}); renderProject(); return; }
+  if (t.dataset.srm){ const a = [...p.pasos]; a.splice(+t.dataset.srm,1); await projPatch({pasos:a}); renderProject(); return; }
+  if (t.dataset.smv){ const [i,d] = t.dataset.smv.split(":").map(Number); const a = [...p.pasos], j = i+d; if (j<0||j>=a.length) return; [a[i],a[j]] = [a[j],a[i]]; await projPatch({pasos:a}); renderProject(); return; }
+  if (t.dataset.zoom){ const d = document.createElement("div"); d.className = "lb"; d.innerHTML = `<img src="${esc(blobUrl(t.dataset.zoom))}" alt="">`; d.onclick = () => d.remove(); document.body.appendChild(d); }
+}, true);
+
+/* =========================================================
+   Sesiones con cliente
+   ========================================================= */
+let curSes = null, sesTab = "cliente";
+const SES_TABS = [
+  ["cliente","Cliente y proyecto"],["terreno","Ubicación y terreno"],["programa","Programa arquitectónico"],["peticiones","Peticiones específicas"],
+  ["estilo","Estilo y referencias"],["presupuesto","Presupuesto y plazos"],["documentos","Qué pedirle al cliente"],["acuerdos","Acuerdos y próximos pasos"]];
+const DOCS = ["Copia de la escritura del terreno","Certificado de gravámenes del Registro de la Propiedad","Pago del impuesto predial del año","Informe de Regulación Municipal (IRM) o línea de fábrica","Levantamiento topográfico","Estudio de suelos (si existe)","Cédula / RUC del propietario","Planos existentes (si hay construcción)","Reglamento del conjunto o condominio","Permisos o aprobaciones previas","Factibilidad de servicios (agua, luz, alcantarillado)","Fotos y videos del terreno"];
+const SERV = ["Agua potable","Alcantarillado","Energía eléctrica","Internet","Vía pavimentada","Alumbrado público","Recolección de basura","Gas centralizado"];
+function visibleSessions(){ const lim = Date.now() - (+S.settings.retencion || 14) * 864e5; return S.sesiones.filter(s => !s.archivado && (s.creado||0) > lim); }
+async function newSession(tipo){
+  const id = uid("s"), now = Date.now();
+  const s = {tipo: tipo || "", creado: now, actualizado: now, archivado:false, cliente:{}, terreno:{servicios:[]}, programa:{filas:[], circ:25}, peticiones:[], estilo:{}, presupuesto:{}, documentos:[], acuerdos:{pasos:[]}, fotos:[], refs:[]};
+  if (await safe(() => Store.set("sesiones", id, s))){ if (!S.sesiones.find(x=>x.id===id)) S.sesiones.push({...s, id}); curSes = id; sesTab = "cliente"; renderSession(); }
+}
+let sesPending = null;
+async function writeSes(sid){
+  const s = S.sesiones.find(x=>x.id===sid); if (!s) return; s.actualizado = Date.now();
+  const {id, ...data} = s; setSaved("busy");
+  const ok = await safe(() => Store.set("sesiones", id, data)); setSaved(ok ? "ok" : "err");
+}
+const _saveSes = debounce(sid => { sesPending = null; writeSes(sid); }, 1000);
+function saveSes(){ sesPending = curSes; _saveSes(curSes); }
+function setSaved(st){ const el = $("#savedst"); if (!el) return; el.className = "saved " + st; el.lastChild.textContent = st==="ok" ? " Guardado en la base de datos" : st==="busy" ? " Guardando…" : st==="err" ? " Sin guardar" : " Listo"; }
+function sesDone(s, k){
+  if (k==="cliente") return !!(s.cliente.nombre); if (k==="terreno") return !!(s.terreno.ciudad || s.terreno.direccion || (s.fotos||[]).length);
+  if (k==="programa") return (s.programa.filas||[]).length > 0; if (k==="peticiones") return (s.peticiones||[]).length > 0;
+  if (k==="estilo") return !!(s.estilo.estilo || (s.refs||[]).length); if (k==="presupuesto") return !!(s.presupuesto.obra);
+  if (k==="documentos") return (s.documentos||[]).length > 0; if (k==="acuerdos") return !!(s.acuerdos.notas || (s.acuerdos.pasos||[]).length);
+}
+function fi(path, label, val, attrs){ return `<label class="fl">${label}<input data-s="${path}" value="${esc(val??"")}" ${attrs||""}></label>`; }
+function ta(path, label, val, rows){ return `<label class="fl w2" style="grid-column:1/-1">${label}<textarea data-s="${path}" rows="${rows||4}">${esc(val??"")}</textarea></label>`; }
+function sel(path, label, val, opts){ return `<label class="fl">${label}<select data-s="${path}"><option value=""></option>${opts.map(o=>`<option ${val===o?"selected":""}>${esc(o)}</option>`).join("")}</select></label>`; }
+function photoGrid(key, s, label){
+  const arr = s[key] || [];
+  return `<div class="gal" style="margin-top:14px">${arr.map((m,i)=>`<div class="gi"><img src="${esc(blobUrl(m.id))}" alt="" data-szoom="${esc(m.id)}"><div class="cp"><input data-cap="${key}:${i}" value="${esc(m.cap||"")}" placeholder="Descripción" style="padding:4px 6px"><button class="del" data-srmph="${key}:${i}" aria-label="Quitar">×</button></div></div>`).join("")}
+    <div class="drop" data-sdrop="${key}">${ICON.cam}<button class="btn sm" data-sup="${key}">${label}</button><span class="ro">Desde el celular puedes tomar la foto directamente.</span></div></div>`;
+}
+function renderSession(){
+  const s = S.sesiones.find(x=>x.id===curSes); if (!s){ $("#overlay").innerHTML = ""; return; }
+  const keepTop = renderSession.last === curSes + sesTab ? ($("#overlay .wsb")?.scrollTop || 0) : 0; renderSession.last = curSes + sesTab;
+  const o = BYID[s.tipo], c = s.cliente, t = s.terreno, pr = s.programa, pe = s.presupuesto, es = s.estilo, ac = s.acuerdos;
+  const cutoff = new Date((s.creado||Date.now()) + (+S.settings.retencion||14)*864e5);
+  let body = "";
+  if (sesTab === "cliente") body = `<h2>Cliente y proyecto</h2><p class="hint2">Datos básicos de la persona y de lo que quiere construir.</p><div class="grid2">
+    ${fi("cliente.nombre","Nombre del cliente",c.nombre)}${fi("cliente.telefono","Teléfono",c.telefono,'inputmode="tel"')}${fi("cliente.correo","Correo",c.correo,'inputmode="email"')}
+    ${sel("cliente.rol","Rol",c.rol,["Propietario","Promotor / inversionista","Representante legal","Familiar del propietario","Entidad pública"])}
+    ${sel("cliente.origen","Cómo llegó",c.origen,["Referido","Redes sociales","Página web","Cliente anterior","Concurso","Otro"])}
+    <label class="fl">Tipología<select data-s="tipo">${TAX.map(cc=>`<optgroup label="${esc(cc.n)}">${cc.list.map(x=>`<option value="${x.id}" ${x.id===s.tipo?"selected":""}>${esc(x.n)}</option>`).join("")}</optgroup>`).join("")}</select></label>
+    ${fi("cliente.proyecto","Nombre tentativo del proyecto",c.proyecto)}
+    ${sel("cliente.uso","Uso del proyecto",c.uso,["Uso propio","Venta","Renta","Inversión / mixto","Institucional"])}
+    ${fi("cliente.usuarios","N.º de usuarios / ocupantes",c.usuarios,'inputmode="numeric"')}
+    ${fi("cliente.fecha","Fecha de la reunión",c.fecha || new Date().toISOString().slice(0,10),'type="date"')}
+    ${ta("cliente.necesidad","¿Qué problema quiere resolver o qué sueña construir?",c.necesidad,4)}</div>`;
+  if (sesTab === "terreno") body = `<h2>Ubicación y terreno</h2><p class="hint2">País, provincia, cantón y ciudad definen la normativa y dónde buscar la información oficial.</p><div class="grid2">
+    ${fi("terreno.pais","País",t.pais ?? "Ecuador")}${fi("terreno.provincia","Provincia",t.provincia)}${fi("terreno.canton","Cantón",t.canton)}${fi("terreno.ciudad","Ciudad / parroquia",t.ciudad)}
+    ${fi("terreno.direccion","Dirección o referencia",t.direccion)}${fi("terreno.catastro","Clave catastral",t.catastro)}${fi("terreno.mapa","Enlace de ubicación (mapa)",t.mapa)}
+    ${fi("terreno.area","Área del terreno (m²)",t.area,'inputmode="decimal"')}${fi("terreno.frente","Frente (m)",t.frente,'inputmode="decimal"')}${fi("terreno.fondo","Fondo (m)",t.fondo,'inputmode="decimal"')}
+    ${sel("terreno.topo","Topografía",t.topo,["Plano","Pendiente leve (< 10 %)","Pendiente media (10–30 %)","Pendiente fuerte (> 30 %)","Irregular"])}
+    ${sel("terreno.orient","Orientación del frente",t.orient,["Norte","Sur","Este","Oeste","Noreste","Noroeste","Sureste","Suroeste"])}
+    ${fi("terreno.cos","COS / CUS / altura permitida (si lo sabe)",t.cos)}
+    ${ta("terreno.entorno","Entorno, vecinos, vistas, accesos y ruidos",t.entorno,3)}
+    ${ta("terreno.riesgos","Riesgos observados (inundación, deslizamiento, rellenos, quebradas)",t.riesgos,2)}</div>
+    <div class="lbl" style="margin:18px 0 8px">Servicios existentes</div><div class="checks">${SERV.map(v=>`<label class="ck ${(t.servicios||[]).includes(v)?"on":""}"><input type="checkbox" data-arr="terreno.servicios" value="${esc(v)}" ${(t.servicios||[]).includes(v)?"checked":""}>${esc(v)}</label>`).join("")}</div>
+    <div class="lbl" style="margin:22px 0 0">Fotos del terreno</div>${photoGrid("fotos", s, "Tomar o subir fotos")}`;
+  if (sesTab === "programa"){
+    const rows = pr.filas || [], util = rows.reduce((a,r)=>a + (+r.cant||0)*(+r.m2||0), 0), circ = +pr.circ || 0, tot = util*(1+circ/100);
+    const base = PROG[o ? o.cat.c : "RES"] || [];
+    body = `<h2>Programa arquitectónico</h2><p class="hint2">Anota los espacios que el cliente pide. Luego en la oficina lo afinas. Toca un espacio sugerido para agregarlo.</p>
+    <div class="qchips">${base.map((b,i)=>`<button class="chip" data-pb="${i}">+ ${esc(b[1])}</button>`).join("")}</div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th style="width:18%">Zona</th><th>Espacio</th><th style="width:9%">Cant.</th><th style="width:11%">m² c/u</th><th style="width:11%" class="num">Subtotal</th><th>Observaciones</th><th style="width:34px"></th></tr></thead>
+    <tbody>${rows.map((r,i)=>`<tr><td><input data-pr="${i}:zona" value="${esc(r.zona||"")}"></td><td><input data-pr="${i}:espacio" value="${esc(r.espacio||"")}"></td><td><input class="num" data-pr="${i}:cant" value="${esc(r.cant??1)}" inputmode="decimal"></td><td><input class="num" data-pr="${i}:m2" value="${esc(r.m2??"")}" inputmode="decimal"></td><td class="num" data-sub="${i}">${((+r.cant||0)*(+r.m2||0)).toFixed(1)}</td><td><input data-pr="${i}:obs" value="${esc(r.obs||"")}"></td><td><button class="del" data-prm="${i}" aria-label="Quitar fila">×</button></td></tr>`).join("")}</tbody>
+    <tfoot><tr><td colspan="4">Área útil</td><td class="num" id="p-util">${util.toFixed(1)} m²</td><td colspan="2"></td></tr>
+    <tr><td colspan="3">Circulación y muros</td><td><input class="num" data-s="programa.circ" value="${esc(circ)}" inputmode="decimal" style="padding:4px 6px"></td><td class="num">%</td><td colspan="2"></td></tr>
+    <tr><td colspan="4"><b>Área bruta estimada</b></td><td class="num"><b id="p-tot">${tot.toFixed(1)} m²</b></td><td colspan="2"></td></tr></tfoot></table></div>
+    <div class="acts" style="margin-top:12px"><button class="btn sm" data-padd>${ICON.plus} Agregar espacio</button>${downloads ? `<button class="btn sm ghost" data-pcsv>Descargar programa (.csv)</button>` : ""}</div>`;
+  }
+  if (sesTab === "peticiones") body = `<h2>Peticiones específicas</h2><p class="hint2">Lo que el cliente pide con sus propias palabras. Clasifícalo por prioridad para negociar después.</p>
+    ${(s.peticiones||[]).map((r,i)=>`<div class="req"><input data-pe="${i}:t" value="${esc(r.t||"")}" placeholder="Ej. Cocina abierta hacia el jardín"><select data-pe="${i}:p"><option value="1" ${r.p=="1"?"selected":""}>Imprescindible</option><option value="2" ${r.p=="2"?"selected":""}>Deseable</option><option value="3" ${r.p=="3"?"selected":""}>Opcional</option></select><button class="del" data-perm="${i}" aria-label="Quitar">×</button></div>`).join("")}
+    <div class="acts" style="margin-top:12px"><button class="btn sm" data-peadd>${ICON.plus} Agregar petición</button></div>`;
+  if (sesTab === "estilo") body = `<h2>Estilo y referencias</h2><p class="hint2">Gustos, materiales y lo que el cliente no quiere. Sube las imágenes que te muestre.</p><div class="grid2">
+    ${sel("estilo.estilo","Estilo",es.estilo,["Contemporáneo","Minimalista","Moderno tropical","Industrial","Colonial / tradicional","Rústico","Mediterráneo","Nórdico","Bioclimático","Otro"])}
+    ${fi("estilo.materiales","Materiales que le gustan",es.materiales)}${fi("estilo.colores","Colores",es.colores)}
+    ${ta("estilo.no","Lo que NO quiere",es.no,2)}${ta("estilo.notas","Notas de referencias",es.notas,3)}</div>
+    <div class="lbl" style="margin:22px 0 0">Imágenes de referencia</div>${photoGrid("refs", s, "Subir referencias")}`;
+  if (sesTab === "presupuesto") body = `<h2>Presupuesto y plazos</h2><p class="hint2">Define expectativas desde la primera reunión.</p><div class="grid2">
+    ${fi("presupuesto.obra","Presupuesto de obra (USD)",pe.obra,'inputmode="decimal"')}${fi("presupuesto.honorarios","Honorarios esperados (USD)",pe.honorarios,'inputmode="decimal"')}
+    ${sel("presupuesto.fin","Financiamiento",pe.fin,["Recursos propios","Crédito hipotecario (banco)","Crédito BIESS","Inversionistas","Preventa","Fondos públicos","Mixto"])}
+    ${fi("presupuesto.inicio","Inicio deseado",pe.inicio,'type="date"')}${fi("presupuesto.entrega","Entrega deseada",pe.entrega,'type="date"')}
+    ${sel("presupuesto.etapas","¿Por etapas?",pe.etapas,["No, una sola etapa","Sí, 2 etapas","Sí, 3 o más etapas","Por definir"])}
+    ${ta("presupuesto.notas","Notas sobre presupuesto y prioridades",pe.notas,3)}</div>`;
+  const DOCL = (o && window.PEDIR) ? PEDIR.lista(o).map(x=>x[1]).concat(((S.tipos[o.id]||{}).pedir||[]).map(x=>x.t)) : DOCS;
+  if (sesTab === "documentos") body = `<h2>Qué pedirle al cliente</h2><p class="hint2">Lista en orden para ${o ? esc(o.n.toLowerCase()) : "este proyecto"}. Marca lo que ya te entregó o prometió entregar.</p><div class="checks" style="grid-template-columns:1fr">${DOCL.map(v=>`<label class="ck ${(s.documentos||[]).includes(v)?"on":""}"><input type="checkbox" data-arr="documentos" value="${esc(v)}" ${(s.documentos||[]).includes(v)?"checked":""}>${esc(v)}</label>`).join("")}</div>`;
+  if (sesTab === "acuerdos") body = `<h2>Acuerdos y próximos pasos</h2><p class="hint2">Qué se acordó y quién hace qué. ${o ? "Los contratos sugeridos para esta tipología están en su ficha." : ""}</p><div class="grid2">
+    ${ta("acuerdos.notas","Notas de la reunión",ac.notas,5)}
+    ${fi("acuerdos.proxima","Próxima reunión",ac.proxima,'type="date"')}
+    ${o ? sel("acuerdos.contrato","Contrato a firmar primero",ac.contrato,CT.reglas(o).items.map(x=>CT.L[x.c].n)) : ""}</div>
+    <div class="lbl" style="margin:20px 0 8px">Próximos pasos</div>
+    ${(ac.pasos||[]).map((r,i)=>`<div class="req"><input data-ap="${i}:t" value="${esc(r.t||"")}" placeholder="Ej. Enviar propuesta de honorarios"><input type="date" data-ap="${i}:f" value="${esc(r.f||"")}"><button class="del" data-aprm="${i}" aria-label="Quitar">×</button></div>`).join("")}
+    <div class="acts" style="margin-top:12px"><button class="btn sm" data-apadd>${ICON.plus} Agregar paso</button></div>`;
+  $("#overlay").innerHTML = `<div class="ov">
+    <div class="ovh"><button class="iconbtn" data-close aria-label="Cerrar sesión">←</button><div class="ttl"><small>Sesión con cliente${o ? " · " + esc(o.n) : ""}</small><b>${esc(c.nombre || "Cliente nuevo")}</b></div>
+      <span class="saved ok" id="savedst"><i></i> Guardado en la base de datos</span>
+      <button class="btn sm" data-sarch title="Se oculta de este dispositivo y queda solo en la base de datos">Archivar ahora</button></div>
+    <div class="ovb" style="overflow:hidden"><div class="ws">
+      <nav class="wsnav">${SES_TABS.map(([k,n],i)=>`<button class="${k===sesTab?"on":""}" data-stab="${k}"><span class="n">${pad(i+1)}</span>${n}<span class="ok ${sesDone(s,k)?"y":""}"></span></button>`).join("")}
+        <div class="ro" style="padding:14px 16px;font-size:11.5px">Se ocultará de aquí el ${cutoff.toLocaleDateString("es-EC",{day:"numeric",month:"short"})} y quedará solo en la base de datos.</div></nav>
+      <div class="wsb">${body}</div></div></div></div>`;
+  $("#overlay .wsb").scrollTop = keepTop;
+  wireSesDrops();
+}
+function setPath(obj, path, val){ const k = path.split("."); let o = obj; for (let i=0;i<k.length-1;i++){ o[k[i]] = o[k[i]] || {}; o = o[k[i]]; } o[k[k.length-1]] = val; }
+function curS(){ return S.sesiones.find(x=>x.id===curSes); }
+function recalcProg(){ const s = curS(); const rows = s.programa.filas||[]; const util = rows.reduce((a,r)=>a+(+r.cant||0)*(+r.m2||0),0), tot = util*(1+(+s.programa.circ||0)/100);
+  rows.forEach((r,i)=>{ const c = document.querySelector(`[data-sub="${i}"]`); if (c) c.textContent = ((+r.cant||0)*(+r.m2||0)).toFixed(1); });
+  const u = $("#p-util"), t = $("#p-tot"); if (u) u.textContent = util.toFixed(1)+" m²"; if (t) t.textContent = tot.toFixed(1)+" m²"; }
+$("#overlay").addEventListener("input", e => {
+  if (!curSes) return; const t = e.target, s = curS(); if (!s) return;
+  if (t.dataset.s){ if (t.dataset.s === "tipo") s.tipo = t.value; else setPath(s, t.dataset.s, t.value); if (t.dataset.s === "programa.circ") recalcProg(); if (t.dataset.s === "cliente.nombre"){ const b = document.querySelector(".ovh .ttl b"); if (b) b.textContent = t.value || "Cliente nuevo"; } setSaved("busy"); saveSes(); }
+  if (t.dataset.pr){ const [i,k] = t.dataset.pr.split(":"); s.programa.filas[+i][k] = t.value; if (k==="cant"||k==="m2") recalcProg(); setSaved("busy"); saveSes(); }
+  if (t.dataset.pe){ const [i,k] = t.dataset.pe.split(":"); s.peticiones[+i][k] = t.value; setSaved("busy"); saveSes(); }
+  if (t.dataset.ap){ const [i,k] = t.dataset.ap.split(":"); s.acuerdos.pasos[+i][k] = t.value; setSaved("busy"); saveSes(); }
+  if (t.dataset.cap){ const [k,i] = t.dataset.cap.split(":"); s[k][+i].cap = t.value; setSaved("busy"); saveSes(); }
+});
+$("#overlay").addEventListener("change", e => {
+  if (!curSes) return; const t = e.target, s = curS(); if (!s) return;
+  if (t.dataset.arr){ const path = t.dataset.arr; const arr = path.split(".").reduce((o,k)=>o[k], s) || []; const set = new Set(arr); t.checked ? set.add(t.value) : set.delete(t.value);
+    setPath(s, path, [...set]); t.closest(".ck").classList.toggle("on", t.checked); saveSes(); }
+  if (t.tagName === "SELECT" && t.dataset.s === "tipo"){ saveSes(); renderSession(); }
+  else if (t.tagName === "SELECT" && (t.dataset.s || t.dataset.pe)){ saveSes(); }
+});
+$("#overlay").addEventListener("click", async e => {
+  if (!curSes) return; const t = e.target.closest("button,img[data-szoom]"); if (!t) return; const s = curS(); if (!s) return;
+  if (t.dataset.stab){ sesTab = t.dataset.stab; renderSession(); $(".wsb") && ($(".wsb").scrollTop = 0); return; }
+  if (t.dataset.pb){ const o = BYID[s.tipo]; const b = (PROG[o ? o.cat.c : "RES"]||[])[+t.dataset.pb]; s.programa.filas.push({zona:b[0], espacio:b[1], cant:1, m2:b[2], obs:""}); saveSes(); renderSession(); return; }
+  if (t.dataset.padd !== undefined){ s.programa.filas.push({zona:"", espacio:"", cant:1, m2:"", obs:""}); saveSes(); renderSession(); return; }
+  if (t.dataset.prm){ s.programa.filas.splice(+t.dataset.prm,1); saveSes(); renderSession(); return; }
+  if (t.dataset.pcsv !== undefined){ const rows = [["Zona","Espacio","Cantidad","m2 por unidad","Subtotal m2","Observaciones"], ...s.programa.filas.map(r=>[r.zona,r.espacio,r.cant,r.m2,((+r.cant||0)*(+r.m2||0)).toFixed(2),r.obs])];
+    const csv = "﻿" + rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(";")).join("\r\n");
+    try { await downloads.save({filename:`Programa arquitectonico - ${(s.cliente.proyecto||s.cliente.nombre||"proyecto").replace(/[\\/:*?"<>|]/g,"")}.csv`, data:csv}); } catch(err){ if (err && err.code !== "declined") toast("No se pudo descargar."); } return; }
+  if (t.dataset.peadd !== undefined){ s.peticiones.push({t:"", p:"2"}); saveSes(); renderSession(); return; }
+  if (t.dataset.perm){ s.peticiones.splice(+t.dataset.perm,1); saveSes(); renderSession(); return; }
+  if (t.dataset.apadd !== undefined){ s.acuerdos.pasos = s.acuerdos.pasos || []; s.acuerdos.pasos.push({t:"", f:""}); saveSes(); renderSession(); return; }
+  if (t.dataset.aprm){ s.acuerdos.pasos.splice(+t.dataset.aprm,1); saveSes(); renderSession(); return; }
+  if (t.dataset.sup){ const fs = await pickFiles("image/*", true); await addSesPhotos(t.dataset.sup, fs); return; }
+  if (t.dataset.srmph){ const [k,i] = t.dataset.srmph.split(":"); s[k].splice(+i,1); saveSes(); renderSession(); return; }
+  if (t.dataset.szoom){ const d = document.createElement("div"); d.className = "lb"; d.innerHTML = `<img src="${esc(blobUrl(t.dataset.szoom))}" alt="">`; d.onclick = () => d.remove(); document.body.appendChild(d); return; }
+  if (t.dataset.sarch !== undefined){ s.archivado = true; const {id, ...data} = s; if (await safe(() => Store.set("sesiones", id, data), "Sesión archivada: ya no se muestra aquí")){ S.sesiones = S.sesiones.filter(x=>x.id!==id); closeOverlay(); } return; }
+});
+async function addSesPhotos(key, files){ if (!files.length) return; toast("Subiendo " + files.length + " foto(s)…"); const up = await uploadFiles(files); const s = curS(); s[key] = [...(s[key]||[]), ...up.map(u=>({id:u.id, cap:""}))]; saveSes(); renderSession(); }
+function wireSesDrops(){ document.querySelectorAll("[data-sdrop]").forEach(d => {
+  d.addEventListener("dragover", e => { e.preventDefault(); d.classList.add("on"); }); d.addEventListener("dragleave", () => d.classList.remove("on"));
+  d.addEventListener("drop", e => { e.preventDefault(); d.classList.remove("on"); addSesPhotos(d.dataset.sdrop, [...e.dataTransfer.files].filter(f=>/^image\//.test(f.type))); }); }); }
+
+function renderSesView(){
+  const list = visibleSessions().sort((a,b)=>(b.actualizado||0)-(a.actualizado||0)), ret = +S.settings.retencion || 14;
+  $("#ses").innerHTML = `<div class="wrap"><section class="hero" style="grid-template-columns:1fr auto"><div><div class="eyebrow">// Clientes</div><h1>Sesiones <em>activas</em></h1>
+    <p>Cada sesión se guarda al instante en la base de datos del atlas y solo tú puedes verla. A los ${ret} días desaparece de esta pantalla y queda únicamente en la base de datos. Nada se guarda en el teléfono.</p></div>
+    ${S.canWrite ? `<button class="btn pri" id="ses-new">${ICON.plus} Nueva sesión</button>` : ""}</section>
+    ${list.length ? `<div class="slist">${list.map(s => { const o = BYID[s.tipo], left = Math.max(0, Math.ceil(((s.creado||0) + ret*864e5 - Date.now())/864e5)); return `<div class="scard hud">
+      <div class="m">${o ? esc(o.code + " · " + o.n) : "Sin tipología"}</div><h3>${esc(s.cliente?.nombre || "Cliente sin nombre")}</h3>
+      <div class="ro">${esc(s.cliente?.proyecto || "")}${s.terreno?.ciudad ? " · " + esc(s.terreno.ciudad) : ""}</div>
+      <div class="ro">${(s.programa?.filas||[]).length} espacios · ${(s.peticiones||[]).length} peticiones · ${(s.fotos||[]).length} fotos</div>
+      <div class="left">Visible ${left} ${left===1?"día":"días"} más</div>
+      <div class="acts"><button class="btn sm pri" data-sopen="${esc(s.id)}">Abrir</button><button class="btn sm" data-sarch2="${esc(s.id)}">Archivar ahora</button></div></div>`; }).join("")}</div>`
+    : `<div class="empty">No hay sesiones activas. Abre una tipología en el atlas y pulsa <b>Iniciar con cliente</b>, o crea una nueva sesión aquí.</div>`}</div>`;
+}
+$("#ses").addEventListener("click", async e => {
+  const t = e.target.closest("button"); if (!t) return;
+  if (t.id === "ses-new") return newSession(selected || "");
+  if (t.dataset.sopen){ curSes = t.dataset.sopen; sesTab = "cliente"; renderSession(); return; }
+  if (t.dataset.sarch2){ const s = S.sesiones.find(x=>x.id===t.dataset.sarch2); s.archivado = true; const {id, ...data} = s; if (await safe(() => Store.set("sesiones", id, data), "Sesión archivada")){ S.sesiones = S.sesiones.filter(x=>x.id!==id); renderSesView(); renderMeta(); } }
+});
+
+/* =========================================================
+   Ajustes
+   ========================================================= */
+function openSettings(){
+  const st = S.settings;
+  const m = modal(`<h2>Personalizar</h2>
+    <div style="display:flex;gap:14px;align-items:center"><div class="logo" style="width:64px;height:64px">${st.logo ? `<img src="${esc(blobUrl(st.logo))}" alt="">` : ICON.logo}</div>
+      <div class="acts">${S.canWrite ? `<button class="btn sm" id="st-logo">${ICON.cam} ${st.logo ? "Cambiar logo" : "Subir logo"}</button>${st.logo ? `<button class="btn sm ghost" id="st-nologo">Quitar</button>` : ""}` : ""}</div></div>
+    <label class="fl">Nombre del estudio<input id="st-n" value="${esc(st.estudio||"")}" placeholder="Atlas Tipológico"></label>
+    <label class="fl">Lema o subtítulo<input id="st-l" value="${esc(st.lema||"")}" placeholder="Arquitectura · Diseño · Construcción"></label>
+    <div class="fl">Color de acento<div class="swatches">${Object.entries(ACCENTS).map(([k,a])=>`<button class="sw" data-acc="${k}" aria-pressed="${(st.acento||"cian")===k}" style="background:${a.c};color:${a.c}" aria-label="${k}"></button>`).join("")}</div></div>
+    <label class="fl">Días que una sesión de cliente queda visible<select id="st-r">${[1,3,7,14,30,60,90].map(d=>`<option value="${d}" ${+st.retencion===d?"selected":""}>${d} ${d===1?"día":"días"}</option>`).join("")}</select></label>
+    <div class="ro">Pasado ese tiempo la sesión deja de mostrarse en el atlas y queda solo en la base de datos, que solo tú puedes leer.</div>
+    <div class="acts">${S.canWrite ? `<button class="btn pri" id="st-save">Guardar</button>` : ""}<button class="btn ghost" id="st-arch">Ver sesiones archivadas</button></div>`);
+  let acc = st.acento || "cian", logo = st.logo || "";
+  m.addEventListener("click", async e => {
+    const t = e.target.closest("button"); if (!t) return;
+    if (t.dataset.acc){ acc = t.dataset.acc; m.querySelectorAll(".sw").forEach(b=>b.setAttribute("aria-pressed", b.dataset.acc===acc)); const a = ACCENTS[acc]; document.documentElement.style.setProperty("--acc", a.c); document.documentElement.style.setProperty("--acc-rgb", a.rgb); document.documentElement.style.setProperty("--acc-ink", a.ink); }
+    if (t.id === "st-logo"){ const fs = await pickFiles("image/png,image/jpeg,image/webp,image/svg+xml"); if (!fs.length) return; const [r] = await uploadFiles(fs); if (r){ logo = r.id; m.querySelector(".logo").innerHTML = `<img src="${esc(blobUrl(logo))}" alt="">`; } }
+    if (t.id === "st-nologo"){ logo = ""; m.querySelector(".logo").innerHTML = ICON.logo; }
+    if (t.id === "st-save"){ const data = {estudio:m.querySelector("#st-n").value.trim(), lema:m.querySelector("#st-l").value.trim(), acento:acc, logo, retencion:+m.querySelector("#st-r").value};
+      S.settings = {...S.settings, ...data}; if (await safe(() => Store.set("ajustes","general", S.settings), "Personalización guardada")){ applySettings(); m.remove(); subscribeSessions(); } }
+    if (t.id === "st-arch"){ m.remove(); openArchive(); }
+  });
+}
+async function openArchive(){
+  let arr = [];
+  if (db){ try { const snap = await db.collection("sesiones").get(); arr = snap.docs.map(d=>({id:d.id, ...d.data()})); } catch(e){ toast("No se pudo leer el archivo."); return; } }
+  else arr = S.sesiones;
+  const vis = new Set(visibleSessions().map(s=>s.id)); arr = arr.filter(s => !vis.has(s.id)).sort((a,b)=>(b.creado||0)-(a.creado||0));
+  const m = modal(`<h2>Sesiones archivadas</h2><p class="ro" style="margin:0">Guardadas en la base de datos. Ábrelas solo cuando las necesites en la oficina.</p>
+    <div class="mine2">${arr.map(s=>{ const o = BYID[s.tipo]; return `<div class="prow" style="grid-template-columns:1fr auto;border-color:var(--line2);background:none"><div><b>${esc(s.cliente?.nombre||"Sin nombre")}</b><span>${o?esc(o.n):""} · ${new Date(s.creado||0).toLocaleDateString("es-EC")}</span></div><div class="acts"><button class="btn sm" data-restore="${esc(s.id)}">Volver a mostrar</button></div></div>`; }).join("") || `<div class="ro">No hay sesiones archivadas.</div>`}</div>`);
+  m.addEventListener("click", async e => { const b = e.target.closest("[data-restore]"); if (!b) return; const s = arr.find(x=>x.id===b.dataset.restore); const {id, ...data} = s; data.archivado = false; data.creado = Date.now();
+    if (await safe(() => Store.set("sesiones", id, data), "Sesión visible otra vez")){ m.remove(); subscribeSessions(); } });
+}
+$("#btn-settings").onclick = openSettings;
+
+/* =========================================================
+   Vistas
+   ========================================================= */
+let atlasReady = false;
+function show(v, opts){
+  ["home","atlas","flujo","ses"].forEach(k => { $("#"+k).hidden = k !== v; $("#tab-"+k).setAttribute("aria-selected", k===v); });
+  if (v === "flujo" && window.FLUJO_UI) FLUJO_UI.render();
+  if (v === "ses") renderSesView();
+  if (v !== "atlas") return;
+  if (!atlasReady){ layoutWorld(); atlasReady = true; }
+  if (opts && opts.enter){
+    const fit = camFor({x:0,y:0,w:world._w,h:world._h}, 1, 30), {w,h} = vpSize();
+    cam = {s: fit.s*.22}; cam.x = w/2 - world._w/2*cam.s; cam.y = h/2 - world._h/2*cam.s; applyCam();
+    world.classList.remove("entering"); void world.offsetWidth; world.classList.add("entering"); setTimeout(() => world.classList.remove("entering"), 2200);
+    fly(fit, 1500);
+  } else if (!camSet) fitAll(0);
+  camSet = true;
+}
+$("#tab-home").onclick = () => { renderHome(); show("home"); };
+$("#tab-atlas").onclick = () => show("atlas", {enter: !camSet});
+$("#tab-ses").onclick = () => show("ses");
+$("#tab-flujo").onclick = () => show("flujo");
+$("#enter").onclick = () => show("atlas", {enter:true});
+$("#home").addEventListener("click", e => {
+  const pc = e.target.closest("[data-proj]"); if (pc) return openProject(pc.dataset.proj);
+  const cv = e.target.closest(".cv"); if (cv){ show("atlas", {keep:true}); goCat(+cv.dataset.cat); }
+});
+window.addEventListener("resize", () => { if (!$("#atlas").hidden) applyCam(); });
+document.addEventListener("keydown", e => {
+  if (e.target.matches("input,textarea,select")) return;
+  if (e.key === "Escape"){ if (document.querySelector(".lb")) return document.querySelector(".lb").remove(); if (document.querySelector(".modal")) return document.querySelector(".modal").remove(); if ($("#overlay").innerHTML) return closeOverlay(); closeDetail(); }
+  if ($("#atlas").hidden) return;
+  if (e.key === "+" || e.key === "=") zoomBy(1.5); if (e.key === "-") zoomBy(1/1.5); if (e.key === "0") fitAll(500);
+});
+
+/* búsqueda */
+const q = $("#q"), results = $("#results"); let hits = [], hi = 0;
+q.addEventListener("input", () => {
+  const v = norm(q.value.trim()); if (v.length < 2){ results.hidden = true; return; }
+  const terms = v.split(/\s+/);
+  hits = ALL.map(o => { if (!terms.every(t => o.key.includes(t))) return null; const nn = norm(o.n); let sc = 0; if (nn.startsWith(v)) sc += 10; if (nn.includes(v)) sc += 6; if (norm(o.sub.n).includes(v)) sc += 2; return {o, sc}; })
+    .filter(Boolean).sort((a,b)=>b.sc-a.sc).slice(0,40).map(h=>h.o);
+  hi = 0;
+  results.innerHTML = hits.length ? hits.map((o,i) => `<button class="res ${i===0?"on":""}" data-open="${esc(o.id)}"><span class="c">${esc(o.code)}</span><span class="n">${esc(o.n)}</span><span class="p">${esc(o.cat.n)} › ${esc(o.sub.n)}</span></button>`).join("") : `<div class="ro" style="padding:10px">Sin resultados para “${esc(q.value)}”.</div>`;
+  results.hidden = false;
+});
+q.addEventListener("keydown", e => { if (results.hidden || !hits.length) return;
+  if (e.key === "ArrowDown" || e.key === "ArrowUp"){ e.preventDefault(); hi = (hi + (e.key==="ArrowDown"?1:-1) + hits.length) % hits.length; results.querySelectorAll(".res").forEach((b,i)=>b.classList.toggle("on", i===hi)); }
+  if (e.key === "Enter"){ e.preventDefault(); pick(hits[hi].id); } if (e.key === "Escape") results.hidden = true; });
+results.addEventListener("click", e => { const b = e.target.closest("[data-open]"); if (b){ e.stopPropagation(); pick(b.dataset.open); } });
+document.addEventListener("click", e => { if (!e.target.closest(".searchwrap")) results.hidden = true; });
+function pick(id){ results.hidden = true; q.blur(); show("atlas", {keep:true}); openTy(id, true); }
+
+/* =========================================================
+   Refresco y arranque
+   ========================================================= */
+function refresh(){
+  renderMeta(); if (!$("#home").hidden) renderHome(); renderRail(); markWorld();
+  if (selected && !document.activeElement?.closest?.("#detail form")) renderDetail();
+  if (!$("#ses").hidden) renderSesView();
+  if (curProj && !document.activeElement?.closest?.("#overlay input,#overlay textarea")) renderProject();
+}
+(function initLocal(){ const d = lsGet(); if (d.projects) S.projects = d.projects; if (d.tipos) S.tipos = d.tipos; if (d.settings) S.settings = {...S.settings, ...d.settings}; applySettings(); renderHome(); refresh(); })();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (atlasReady) fitGhosts(); });
+
+window.ATLAS = {S, esc, pad, uid, toast, blobUrl, norm, ICON, BYID, TAX, PROG, pickFiles, uploadFiles, show};
+let unsubSes = null;
+function subscribeSessions(){
+  if (!db) return; if (unsubSes) unsubSes();
+  const lim = Date.now() - (+S.settings.retencion || 14) * 864e5;
+  unsubSes = db.collection("sesiones").where("archivado","==",false).where("creado",">",lim).onSnapshot(snap => {
+    const incoming = snap.docs.map(d => ({id:d.id, ...d.data()}));
+    // no pisar la sesión que se está editando
+    S.sesiones = incoming.map(x => x.id === curSes ? (S.sesiones.find(y=>y.id===curSes) || x) : x);
+    renderMeta(); if (!$("#ses").hidden && !curSes) renderSesView();
+  }, () => {});
+}
+(async () => {
+  if (!window.claude || !window.claude.use) return;
+  try {
+    const u = await window.claude.use("user");
+    if (u && typeof u.canEdit === "function"){ const ce = await u.canEdit(); if (ce === false) S.canWrite = false; }
+    const d = await window.claude.use("db");
+    if (d){
+      db = d; S.mode = "db"; S.projects = []; S.tipos = {};
+      db.doc("ajustes/general").onSnapshot(sn => { if (sn.exists){ S.settings = {...S.settings, ...sn.data()}; applySettings(); } subscribeSessions(); }, () => subscribeSessions());
+      db.collection("proyectos").onSnapshot(sn => {
+        const inc = sn.docs.map(x => ({id:x.id, ...x.data()}));
+        S.projects = inc.map(x => x.id === curProj && document.activeElement?.closest?.("#overlay") ? (S.projects.find(y=>y.id===curProj) || x) : x);
+        refresh();
+      }, () => {});
+      db.collection("tipos").onSnapshot(sn => { const m = {}; sn.docs.forEach(x => m[x.id] = x.data()); S.tipos = m; refresh(); }, () => {});
+    }
+    assets = await window.claude.use("assets");
+    downloads = await window.claude.use("downloads");
+    if (selected) renderDetail();
+  } catch(e){}
+})();
+})();
+</script>
+<script src="flujo/m-leg.js"></script>
+<script src="flujo/m-ger.js"></script>
+<script src="flujo/m-his.js"></script>
+<script src="flujo/m-fun.js"></script>
+<script src="flujo/m-geo.js"></script>
+<script src="flujo/m-dis.js"></script>
+<script src="flujo/m-bim.js"></script>
+<script src="flujo/m-tri.js"></script>
+<script src="flujo/m-est.js"></script>
+<script src="flujo/m-res.js"></script>
+<script src="flujo/m-ins.js"></script>
+<script src="flujo/codificacion.js"></script>
+<script src="flujo.js"></script>
+<script>
+(function(){
+  if (window.parent===window) return;
+  document.body.classList.add("emb");
+  function go(m){
+    try{
+      const ses = m.v==="clientes" ? "ses" : m.v;
+      ATLAS.show(ses||"home", ses==="atlas"?{enter:true}:undefined);
+      if (m.open && m.open.id && window.FLUJO_UI){ ATLAS.show("flujo"); FLUJO_UI.open(m.open.id, m.open.page); }
+      else if (m.lib && window.FLUJO_UI && FLUJO_UI.lib){ ATLAS.show("flujo"); FLUJO_UI.lib(m.lib); }
+    }catch(e){ console.warn(e); }
+  }
+  addEventListener("message", e => { const m=e.data; if (m && m.dion==="view") go(m); });
+  const ready=()=>parent.postMessage({dion:"ready"},"*");
+  if (document.readyState==="complete") ready(); else addEventListener("load", ready);
+})();
+</script>
+</body></html>

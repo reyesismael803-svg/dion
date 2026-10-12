@@ -1,0 +1,747 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<script src="shim.js"></script>
+</head><body>
+<title>DION</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* DION — Órbita: el planeta es la pantalla principal; las herramientas se abren como paneles holográficos encima. */
+:root{
+  color-scheme:dark;
+  --bg:#03060B; --panel:#0A131F; --panel2:#0E1928; --glass:rgba(8,16,26,.84);
+  --line:rgba(120,200,255,.14); --line2:rgba(120,200,255,.3);
+  --ink:#E4EEFA; --muted:#8CA0B6; --faint:#55677C;
+  --acc:#38E1FF; --acc-rgb:56,225,255; --done:#B6FF3C; --done-rgb:182,255,60; --warn:#FF5C7A;
+  --f-d:"Michroma","Eurostile","Arial Black",system-ui,sans-serif;
+  --f-b:"Chakra Petch",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-m:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-b);font-size:14px;overflow:hidden;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+#orb{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#orb.drag{cursor:grabbing}
+#orb.pick{cursor:crosshair}
+.hud{position:fixed;z-index:10;background:var(--glass);border:1px solid var(--line2);border-radius:12px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.hud.corner::before{content:"";position:absolute;left:-1px;top:-1px;width:14px;height:14px;border:2px solid var(--acc);border-right:0;border-bottom:0;border-top-left-radius:12px;pointer-events:none}
+.brand{left:16px;top:calc(14px + env(safe-area-inset-top,0px));padding:9px 14px;display:flex;gap:12px;align-items:center}
+.brand b{font-family:var(--f-d);font-weight:400;letter-spacing:.34em;font-size:16px}
+.brand span{font-family:var(--f-m);font-size:10px;color:var(--muted);letter-spacing:.14em}
+.crumbs{left:50%;transform:translateX(-50%);top:calc(14px + env(safe-area-inset-top,0px));padding:7px 12px;font-family:var(--f-m);font-size:11px;letter-spacing:.08em;max-width:calc(100vw - 340px);white-space:nowrap;overflow-x:auto;scrollbar-width:none}
+.crumbs button{border:0;background:none;color:var(--acc);padding:2px 4px;font-family:inherit;letter-spacing:inherit}
+.crumbs i{font-style:normal;color:var(--faint)}
+.tools{right:16px;top:calc(14px + env(safe-area-inset-top,0px));display:flex;overflow:hidden}
+.tools button{border:0;border-right:1px solid var(--line);background:none;padding:9px 12px;font-family:var(--f-m);font-size:10px;letter-spacing:.12em;color:var(--muted)}
+.tools button:last-child{border-right:0}
+.tools button:hover,.tools button[aria-pressed="true"]{color:var(--acc)}
+.orbs{position:fixed;z-index:12;left:16px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:9px}
+.orbtn{width:48px;height:48px;border-radius:50%;border:1px solid var(--line2);background:var(--glass);backdrop-filter:blur(8px);display:grid;place-items:center;font-family:var(--f-m);font-size:9.5px;letter-spacing:.06em;color:var(--muted);position:relative;padding:0;transition:box-shadow .2s,color .2s,border-color .2s}
+.orbtn:hover,.orbtn[aria-current="true"]{color:var(--acc);border-color:var(--acc);box-shadow:0 0 18px rgba(var(--acc-rgb),.45)}
+.orbtn[aria-current="true"]{background:rgba(var(--acc-rgb),.12)}
+.orbtn .tip{position:absolute;left:58px;top:50%;transform:translateY(-50%);white-space:nowrap;background:var(--panel);border:1px solid var(--line2);padding:4px 9px;border-radius:6px;color:var(--ink);font-family:var(--f-b);font-size:12px;letter-spacing:0;opacity:0;pointer-events:none;transition:opacity .15s}
+.orbtn:hover .tip{opacity:1}
+.fab{position:fixed;z-index:11;right:18px;border:0;border-radius:999px;padding:14px 20px;font-family:var(--f-d);font-size:10.5px;letter-spacing:.18em;background:var(--acc);color:#021016;box-shadow:0 0 30px rgba(var(--acc-rgb),.55)}
+#fab-new{bottom:calc(22px + env(safe-area-inset-bottom,0px))}
+#fab-ctx{bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--done);box-shadow:0 0 30px rgba(var(--done-rgb),.5);animation:beat 2.2s ease-in-out infinite}
+@keyframes beat{50%{box-shadow:0 0 8px rgba(var(--done-rgb),.3)}}
+.hint{left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));padding:9px 16px;font-family:var(--f-m);font-size:11px;color:var(--acc);max-width:calc(100vw - 32px);text-align:center}
+.tip2{position:fixed;z-index:9;pointer-events:none;background:var(--panel2);border:1px solid var(--line2);border-radius:7px;padding:5px 9px;font-size:12px;white-space:nowrap}
+.tip2 small{display:block;font-family:var(--f-m);font-size:9.5px;color:var(--acc);letter-spacing:.1em;text-transform:uppercase}
+.legend{left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));padding:8px 12px;font-size:11.5px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;max-width:calc(100vw - 260px)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:9999;background:var(--panel2);border:1px solid var(--acc);border-radius:8px;padding:9px 16px;font-size:13px;box-shadow:0 0 24px rgba(var(--acc-rgb),.35)}
+
+/* panel lateral (crear / ficha de proyecto) */
+.side{z-index:28;right:16px;top:calc(64px + env(safe-area-inset-top,0px));width:min(380px,calc(100vw - 32px));max-height:calc(100% - 170px);overflow:auto;padding:16px}
+.side h3{margin:0 0 2px;font-family:var(--f-d);font-weight:400;font-size:12.5px;letter-spacing:.16em}
+.side .sub{color:var(--muted);font-size:12.5px;margin:0 0 10px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin:10px 0}
+.kv div small{display:block;font-family:var(--f-m);font-size:9px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+.kv div b{font-weight:500;font-size:13.5px;overflow-wrap:anywhere}
+.kv .mono b{font-family:var(--f-m);font-size:12px}
+label.f{display:flex;flex-direction:column;gap:4px;font-family:var(--f-m);font-size:9.5px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase;margin-top:8px}
+label.f input,label.f select{background:rgba(255,255,255,.04);border:1px solid var(--line2);border-radius:7px;padding:8px 10px;font-family:var(--f-b);font-size:13.5px;letter-spacing:0;text-transform:none;color:var(--ink);outline:none;width:100%}
+label.f input:focus,label.f select:focus{border-color:var(--acc)}
+label.f select option{background:var(--panel)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.btn{border:1px solid var(--line2);background:rgba(255,255,255,.03);border-radius:8px;padding:8px 12px;font-size:12.5px;font-weight:500;color:var(--ink)}
+.btn:hover{border-color:var(--acc);box-shadow:0 0 14px rgba(var(--acc-rgb),.25)}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#021016;font-weight:700}
+.btn.ok{background:var(--done);border-color:var(--done);color:#0B1400;font-weight:700}
+.btn.sm{padding:5px 9px;font-size:11.5px}
+.btn.ghost{border-color:transparent;color:var(--muted)}
+a.btn{text-decoration:none;display:inline-flex;align-items:center}
+.plist{display:grid;gap:6px;margin-top:8px}
+.plist button{display:grid;grid-template-columns:10px 1fr;gap:10px;align-items:center;text-align:left;border:1px solid var(--line);background:none;border-radius:8px;padding:8px 10px;color:var(--ink)}
+.plist button:hover{border-color:var(--acc)}
+.plist i{width:10px;height:10px;border-radius:50%;background:var(--done);box-shadow:0 0 8px var(--done)}
+.plist small{display:block;color:var(--muted);font-size:11.5px}
+
+/* tarjetas de contextos */
+.ctx{left:50%;top:50%;transform:translate(-50%,-50%);width:min(820px,calc(100vw - 32px));max-height:calc(100% - 120px);overflow:auto;padding:20px;z-index:20}
+.ctx h3{margin:0;font-family:var(--f-d);font-weight:400;font-size:13px;letter-spacing:.16em}
+.ccards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:14px}
+.ccard{border:1px solid var(--line2);border-radius:10px;padding:14px;background:rgba(var(--acc-rgb),.04);text-align:left;color:var(--ink);display:flex;flex-direction:column;gap:5px;min-height:118px}
+.ccard:hover{border-color:var(--acc);box-shadow:0 0 22px rgba(var(--acc-rgb),.28)}
+.ccard b{font-family:var(--f-m);font-weight:500;font-size:10px;color:var(--acc);letter-spacing:.14em}
+.ccard span{font-weight:600}
+.ccard small{color:var(--muted);font-size:12px;line-height:1.4}
+.ccard.t2 b{color:var(--done)}
+
+/* escenario de herramientas */
+#stage{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;background:rgba(3,6,11,.55);backdrop-filter:blur(3px)}
+#stage .bar{height:46px;display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid var(--line2);background:rgba(4,8,14,.96);flex:none}
+#stage .bar b{font-family:var(--f-d);font-weight:400;font-size:12px;letter-spacing:.16em}
+#stage .bar > span{font-family:var(--f-m);font-size:10px;color:var(--muted);letter-spacing:.1em}
+#stage .bar .sp{flex:1}
+#stage .bar .s{display:none}
+#stage .bar .btn{white-space:nowrap}
+#stage .frames{position:relative;flex:1;min-height:0;margin:0 0 0 0}
+#stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg)}
+#stage iframe.off{visibility:hidden;pointer-events:none}
+body.staged .orbs{z-index:41;top:54px;transform:none;display:none;flex-direction:column;background:rgba(4,8,14,.94);border:1px solid var(--line2);border-radius:28px;padding:8px;max-height:calc(100vh - 70px);overflow:auto;width:auto;bottom:auto}
+body.staged.orbsOpen .orbs{display:flex}
+body.staged .orbs .tip{display:none}
+#stMenu{width:34px;height:34px;border-radius:50%;border:1px solid var(--line2);background:var(--glass);color:var(--acc);font-family:var(--f-m);font-size:9px;letter-spacing:.06em;padding:0;flex:none}
+#stMenu[aria-expanded="true"]{box-shadow:0 0 14px rgba(var(--acc-rgb,56,224,255),.45)}
+
+/* mesa del terreno */
+#mesa{position:fixed;inset:0;z-index:5000;background:#03070C;display:flex;flex-direction:column}
+#mesa .bar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line2);flex-wrap:wrap;background:rgba(4,8,14,.96)}
+#mesa .bar b{font-family:var(--f-d);font-weight:400;font-size:11.5px;letter-spacing:.16em;margin-right:6px}
+#mesa .bar .seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+#mesa .bar .seg button{border:0;border-right:1px solid var(--line);background:none;padding:7px 11px;font-size:12px;color:var(--muted)}
+#mesa .bar .seg button:last-child{border-right:0}
+#mesa .bar .seg button[aria-pressed="true"]{background:rgba(var(--acc-rgb),.15);color:var(--acc)}
+#mesa .body{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 300px}
+#mcv{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+#mesa .tbl{border-left:1px solid var(--line2);overflow:auto;padding:12px;background:rgba(6,11,18,.9)}
+#mesa .tbl h4{margin:0 0 8px;font-family:var(--f-m);font-weight:500;font-size:10px;letter-spacing:.14em;color:var(--acc)}
+#mesa .vt{width:100%;border-collapse:collapse;font-family:var(--f-m);font-size:11px}
+#mesa .vt th{color:var(--faint);font-weight:400;text-align:left;padding:4px 3px;border-bottom:1px solid var(--line2)}
+#mesa .vt td{padding:2px 3px;border-bottom:1px solid var(--line)}
+#mesa .vt input{width:100%;background:transparent;border:1px solid transparent;border-radius:4px;padding:3px 4px;font-family:var(--f-m);font-size:11px;color:var(--ink)}
+#mesa .vt input:focus{border-color:var(--acc);outline:none}
+#mesa .stat{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:12px 0}
+#mesa .stat div{border:1px solid var(--line);border-radius:8px;padding:8px}
+#mesa .stat small{display:block;font-family:var(--f-m);font-size:9px;color:var(--faint);letter-spacing:.12em}
+#mesa .stat b{font-family:var(--f-m);font-weight:500;font-size:14px}
+#mesa textarea{width:100%;min-height:90px;background:rgba(255,255,255,.04);border:1px solid var(--line2);border-radius:7px;padding:8px;font-family:var(--f-m);font-size:11px;color:var(--ink);resize:vertical}
+#mesa .note{font-size:11.5px;color:var(--muted);line-height:1.45}
+@media (max-width:900px){
+  #mesa .body{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) 42%}
+  #mesa .tbl{border-left:0;border-top:1px solid var(--line2)}
+  .crumbs{max-width:calc(100vw - 32px);top:calc(62px + env(safe-area-inset-top,0px))}
+  .legend{display:none}
+}
+@media (max-width:600px){
+  .orbs{top:auto;bottom:calc(78px + env(safe-area-inset-bottom,0px));transform:none;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;width:calc(100vw - 32px);gap:6px;padding:2px;scrollbar-width:none}
+  .orbs .orbtn{flex:none}
+  #fab-ctx{bottom:calc(22px + env(safe-area-inset-bottom,0px));right:auto;left:16px;padding:12px 14px;letter-spacing:.08em;font-size:10.5px}
+  #fab-new{letter-spacing:.08em;font-size:10.5px}
+  .orbtn{width:40px;height:40px;font-size:8.5px}
+  .orbtn .tip{display:none}
+  .side{top:calc(108px + env(safe-area-inset-top,0px));bottom:auto;max-height:calc(100dvh - 250px);overflow:auto}
+  .ctx{max-height:calc(100dvh - 150px);overflow:auto}
+  #fab-new{bottom:calc(22px + env(safe-area-inset-bottom,0px));padding:12px 14px}
+  #stage .bar{padding-left:12px}
+  #stage .bar .l,#stSub{display:none}
+  #stage .bar .s{display:inline}
+  #stage .bar b{font-size:10.5px;letter-spacing:.1em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
+@media (prefers-reduced-motion: reduce){ #fab-ctx{animation:none} }
+</style>
+
+<canvas id="orb" aria-label="Planeta interactivo: arrastra para girar, pellizca o usa la rueda para acercar"></canvas>
+<div class="hud corner brand"><b>DION</b><span id="brandsub">ÓRBITA</span></div>
+<div class="hud crumbs" id="crumbs"></div>
+<div class="hud tools"><button id="t3d" aria-pressed="true">3D</button><button id="t2d" aria-pressed="false">2D</button><button id="tworld">MUNDO</button><button id="tsat" aria-pressed="false" title="Imagen satelital (Esri World Imagery)">SAT</button></div>
+<nav class="orbs" aria-label="Herramientas de DION">
+  <button class="orbtn" data-go="orbita" aria-current="true">ORB<span class="tip">Órbita · el planeta</span></button>
+  <button class="orbtn" data-go="trayectoria">TRY<span class="tip">Trayectoria · proyectos realizados</span></button>
+  <button class="orbtn" data-go="atlas">ATL<span class="tip">Atlas tipológico</span></button>
+  <button class="orbtn" data-go="flujo">FLJ<span class="tip">Flujo de proyecto · línea de tiempo</span></button>
+  <button class="orbtn" data-go="clientes">CLI<span class="tip">Sesiones con clientes</span></button>
+  <button class="orbtn" data-go="as">A.S.<span class="tip">A.S. · análisis de sitio</span></button>
+  <button class="orbtn" data-go="mez">MEZ<span class="tip">M.E.Z. · matrices, esquemas y zonificación</span></button>
+  <button class="orbtn" data-go="bim">BIM<span class="tip">Carpeta madre y codificación</span></button>
+  <button class="orbtn" data-go="taller" style="border-color:#f59e0b;color:#f59e0b">TLR<span class="tip">Taller · agrega o mejora herramientas</span></button>
+</nav>
+<button class="fab" id="fab-new">+ CREAR PROYECTO</button>
+<button class="fab" id="fab-ctx" hidden>CONTINUAR · CONTEXTOS</button>
+<div class="hud hint" id="hint" hidden></div>
+<div class="hud legend" id="legend"><span><i style="background:rgba(182,255,60,.55)"></i>Donde he trabajado</span><span><i style="background:#B6FF3C;border-radius:50%"></i>Proyecto</span><span><i style="background:rgba(56,225,255,.35)"></i>Selección</span></div>
+<div class="hud corner side" id="side" hidden></div>
+<div class="hud corner ctx" id="ctx" hidden></div>
+<div class="tip2" id="tip" hidden></div>
+
+
+
+<div id="mesa" hidden>
+  <div class="bar">
+    <b>MESA DEL TERRENO</b>
+    <span class="seg"><button data-mt="draw" aria-pressed="true">Dibujar</button><button data-mt="edit" aria-pressed="false">Mover vértices</button><button data-mt="img" aria-pressed="false">Mover imagen</button><button data-mt="pan" aria-pressed="false">Desplazar</button></span>
+    <button class="btn sm" id="mUndo" title="Deshacer">↶</button><button class="btn sm" id="mRedo" title="Rehacer">↷</button>
+    <button class="btn sm" id="mFit">Encuadrar</button><button class="btn sm" id="mSat">Satélite</button>
+    <label class="btn sm" style="cursor:pointer">Imagen de referencia<input type="file" id="mImg" accept="image/*" hidden></label>
+    <label class="btn sm" style="cursor:pointer">Importar KML / GeoJSON<input type="file" id="mKml" accept=".kml,.geojson,.json,application/vnd.google-earth.kml+xml" hidden></label>
+    <span style="flex:1"></span>
+    <button class="btn sm ghost" id="mCancel">Cancelar</button><button class="btn sm ok" id="mOk">Usar este terreno</button>
+  </div>
+  <div class="body">
+    <canvas id="mcv" aria-label="Mesa del terreno: toca para agregar vértices"></canvas>
+    <aside class="tbl">
+      <h4>VÉRTICES · UTM <span id="mZone"></span></h4>
+      <div class="stat"><div><small>ÁREA</small><b id="mArea">0 m²</b></div><div><small>PERÍMETRO</small><b id="mPer">0 m</b></div></div>
+      <table class="vt"><thead><tr><th>#</th><th>Este (m)</th><th>Norte (m)</th><th>Lado</th><th></th></tr></thead><tbody id="mRows"></tbody></table>
+      <h4 style="margin-top:14px">PEGAR COORDENADAS</h4>
+      <textarea id="mPaste" placeholder="Una por línea, del levantamiento o de Google Earth:&#10;-2.16094, -79.89892   (lat, lon)&#10;624512.40, 9761123.15   (Este, Norte UTM)"></textarea>
+      <div class="acts" style="margin-top:6px"><button class="btn sm" id="mPasteOk">Cargar coordenadas</button></div>
+      <h4 style="margin-top:14px">IMAGEN DE REFERENCIA</h4>
+      <label class="f">Ancho real de la imagen (m)<input id="mImgW" inputmode="decimal" value="100"></label>
+      <label class="f">Opacidad<input id="mImgO" type="range" min="0.1" max="1" step="0.05" value="0.6"></label>
+      <p class="note">Captura el sitio en Google Earth (vista desde arriba, norte arriba), súbela aquí, pon el ancho que mide la captura y muévela hasta que calce. Luego dibuja encima. El levantamiento topográfico siempre manda sobre la imagen.</p>
+      <div class="acts"><a class="btn sm" id="mGE" target="_blank" rel="noopener">Ver el sitio en Google Earth</a><a class="btn sm" id="mGM" target="_blank" rel="noopener">Google Maps satélite</a></div>
+    </aside>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="data1.js"></script>
+<script src="data2.js"></script>
+<script src="data3.js"></script>
+<script src="data4.js"></script>
+<script src="data5.js"></script>
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm = s => String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+const slug = s => norm(s).replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+const uid = p => (p||"") + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const pad = n => String(n).padStart(2,"0");
+function toast(m){ const t = document.createElement("div"); t.className = "toast"; t.textContent = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2800); }
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const ACC = "56,225,255", DONE = "182,255,60";
+
+/* ---------- tipologías (mismos ids que el Atlas) ---------- */
+const TAX = window.TAX || [], BYID = {}, TYPES = [];
+TAX.forEach(c => (c.s||[]).forEach(s => (s.t||[]).forEach(t => { let id = slug(c.c + "-" + t[0]), n = 2; while (BYID[id]) id = slug(c.c + "-" + t[0]) + "-" + (n++); const o = {id, n:t[0], cat:c.c, catn:c.n, sub:s.n}; BYID[id] = o; TYPES.push(o); })));
+function suggestFlags(id){ const o = BYID[id], f = {}; if (!o) return f; const c = o.cat, n = norm(o.n + " " + o.sub);
+  if (c === "SAL") f.salud = 1; if (c === "EDU") f.edu = 1; if (c === "GAS") f.alim = 1; if (c === "HOS") f.tur = 1;
+  if (c === "IND" || c === "AGR") f.ind = 1; if (["GOB","SEG","INF","TRA"].includes(c)) f.pub = 1;
+  if (/edificio|condominio|departament|torre|conjunto|urbaniz|multifamiliar|living|mixto|oficinas|residencial/.test(n) && ["RES","MIX","OFI"].includes(c)){ f.ph = 1; f.venta = 1; }
+  if (["MIX","OFI","EVE","DEP","TRA","INF"].includes(c) || /hospital|torre|centro comercial|estadio|aeropuerto/.test(n)) f.grande = 1;
+  if (/restaurante|cafeter|bar|cocina|panader|food/.test(n)) f.alim = 1; return f; }
+
+/* ---------- UTM (WGS84) ---------- */
+const WA = 6378137, WF = 1/298.257223563, E2 = WF*(2-WF), EP2 = E2/(1-E2), K0 = .9996;
+function toUTM(lon, lat, zone){
+  zone = zone || Math.floor((lon + 180)/6) + 1; const l0 = ((zone-1)*6 - 180 + 3)*Math.PI/180, f = lat*Math.PI/180, l = lon*Math.PI/180;
+  const N = WA/Math.sqrt(1 - E2*Math.sin(f)**2), T = Math.tan(f)**2, C = EP2*Math.cos(f)**2, A = Math.cos(f)*(l - l0);
+  const M = WA*((1 - E2/4 - 3*E2**2/64 - 5*E2**3/256)*f - (3*E2/8 + 3*E2**2/32 + 45*E2**3/1024)*Math.sin(2*f) + (15*E2**2/256 + 45*E2**3/1024)*Math.sin(4*f) - (35*E2**3/3072)*Math.sin(6*f));
+  const x = K0*N*(A + (1-T+C)*A**3/6 + (5-18*T+T*T+72*C-58*EP2)*A**5/120) + 500000;
+  let y = K0*(M + N*Math.tan(f)*(A*A/2 + (5-T+9*C+4*C*C)*A**4/24 + (61-58*T+T*T+600*C-330*EP2)*A**6/720)); if (lat < 0) y += 1e7;
+  return {E:x, N:y, zone, south: lat < 0};
+}
+function fromUTM(E, Nn, zone, south){
+  const x = E - 500000, y = south ? Nn - 1e7 : Nn, l0 = ((zone-1)*6 - 180 + 3)*Math.PI/180;
+  const M = y/K0, mu = M/(WA*(1 - E2/4 - 3*E2**2/64 - 5*E2**3/256)), e1 = (1 - Math.sqrt(1-E2))/(1 + Math.sqrt(1-E2));
+  const f1 = mu + (3*e1/2 - 27*e1**3/32)*Math.sin(2*mu) + (21*e1**2/16 - 55*e1**4/32)*Math.sin(4*mu) + (151*e1**3/96)*Math.sin(6*mu) + (1097*e1**4/512)*Math.sin(8*mu);
+  const N1 = WA/Math.sqrt(1 - E2*Math.sin(f1)**2), T1 = Math.tan(f1)**2, C1 = EP2*Math.cos(f1)**2, R1 = WA*(1-E2)/Math.pow(1 - E2*Math.sin(f1)**2, 1.5), D = x/(N1*K0);
+  const lat = f1 - (N1*Math.tan(f1)/R1)*(D*D/2 - (5 + 3*T1 + 10*C1 - 4*C1*C1 - 9*EP2)*D**4/24 + (61 + 90*T1 + 298*C1 + 45*T1*T1 - 252*EP2 - 3*C1*C1)*D**6/720);
+  const lon = l0 + (D - (1 + 2*T1 + C1)*D**3/6 + (5 - 2*C1 + 28*T1 - 3*C1*C1 + 8*EP2 + 24*T1*T1)*D**5/120)/Math.cos(f1);
+  return [lon*180/Math.PI, lat*180/Math.PI];
+}
+
+/* ---------- datos geográficos (archivos propios del artefacto) ---------- */
+const G = {w110:null, w50:null, a1:null, e1:null, e2:null};
+const getJ = async p => { const r = await fetch(p); if (!r.ok) throw new Error(p); return r.json(); };
+function prep(fc, kind){ fc.features.forEach(f => { f.kind = kind; f.bb = d3.geoBounds(f); const p = f.properties;
+  f.lab = (p.lx != null) ? [p.lx, p.ly] : d3.geoCentroid(largest(f)); f.ar = d3.geoArea(f); }); return fc; }
+function largest(f){ const g = f.geometry; if (g.type !== "MultiPolygon") return f; let best = null, ba = -1; g.coordinates.forEach(c => { const q = {type:"Polygon", coordinates:c}, a = d3.geoArea(q); if (a > ba){ ba = a; best = q; } }); return best; }
+
+/* ---------- proyectos (base de datos de DION, la misma del flujo) ---------- */
+let db = null, P = [], unsub = null;
+const LSK = "dion-local-projects";
+function lsGet(){ try { return JSON.parse(localStorage.getItem(LSK) || "[]"); } catch(e){ return []; } }
+function lsSet(v){ try { localStorage.setItem(LSK, JSON.stringify(v)); } catch(e){} }
+async function saveProject(id, data){
+  if (db){ await db.doc("flujos/" + id).set(JSON.parse(JSON.stringify(data))); }
+  else { const all = lsGet().filter(x => x.id !== id); all.push({id, ...data}); lsSet(all); P = all; draw(); }
+}
+function sortedP(){ return P.filter(p => p.estado !== "archivado" && p.loc && isFinite(+p.loc.lat) && p.loc.lat !== "").sort((a,b) => (a.creado||0) - (b.creado||0)); }
+const worked = {c:new Set(), a1:new Set(), a2:new Set()};
+function computeWorked(){ worked.c.clear(); worked.a1.clear(); worked.a2.clear();
+  P.forEach(p => { const L = p.loc || {}; if (p.iso) worked.c.add(p.iso); if (L.pais) worked.c.add(norm(L.pais)); if (L.provincia) worked.a1.add(norm(L.provincia)); if (L.canton) worked.a2.add(norm(L.canton)); }); }
+const isWorked = f => f.kind === "c" ? (worked.c.has(f.properties.iso) || worked.c.has(norm(f.properties.n))) : f.kind === "e2" ? worked.a2.has(norm(f.properties.n)) : worked.a1.has(norm(f.properties.n));
+
+/* ---------- vista y proyección ---------- */
+const cv = $("#orb"), ctx = cv.getContext("2d");
+let W = 0, H = 0, DPR = 1, R = 300;
+const V = {lon:-78.6, lat:-1.6, k:1, mode:"3d"};
+let sel = {c:null, a1:null, a2:null}, hover = null, dirty = true, idleAt = 0, anim = null;
+let mode = null, draft = null, active = null;
+function resize(){ DPR = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W*DPR; cv.height = H*DPR; R = Math.min(W, H)*.4; dirty = true; }
+addEventListener("resize", resize); resize();
+function proj(){
+  if (V.mode === "2d") return d3.geoMercator().rotate([-V.lon, 0]).center([0, V.lat]).scale(R*V.k/1.6).translate([W/2, H/2]).precision(.5);
+  return d3.geoOrthographic().rotate([-V.lon, -V.lat]).scale(R*V.k).translate([W/2, H/2]).clipAngle(90).precision(.4);
+}
+const visDeg = () => Math.min(180, 100/V.k);
+function inView(f){ if (V.k < 1.7) return true; const b = f.bb, d = visDeg(); if (!b) return true;
+  const latOk = b[1][1] >= V.lat - d && b[0][1] <= V.lat + d; if (!latOk) return false;
+  const dl = d/Math.max(.2, Math.cos(V.lat*Math.PI/180)); if (dl >= 180 || b[0][0] > b[1][0]) return true;
+  const c = ((V.lon + 540) % 360) - 180, a0 = b[0][0], a1 = b[1][0]; const d0 = ((a0 - c + 540) % 360) - 180, d1 = ((a1 - c + 540) % 360) - 180;
+  return (d0 <= dl && d1 >= -dl) || Math.abs(d0) <= dl || Math.abs(d1) <= dl; }
+const frontOf = ll => V.mode === "2d" || d3.geoDistance(ll, [V.lon, V.lat]) < Math.PI/2*.97;
+
+/* estrellas */
+const stars = Array.from({length:260}, () => [Math.random(), Math.random(), Math.random()*1.2 + .2, Math.random()]);
+const grat = d3.geoGraticule10();
+
+function draw(){ dirty = true; }
+const SAT = {on:false, cache:new Map(), fail:0, warned:false};
+const SAT_URL = (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`;
+function satTile(z, x, y){ const key = z + "/" + x + "/" + y; let im = SAT.cache.get(key); if (im) return im; im = new Image(); im.crossOrigin = "anonymous";
+  im.onload = () => { im.ok = 1; dirty = true; }; im.onerror = () => { im.bad = 1; if (++SAT.fail > 6 && !SAT.warned){ SAT.warned = true; toast("La imagen satelital está bloqueada dentro de Claude. Se verá al publicar DION en tu propio sitio (paquete de publicación)."); } };
+  im.src = SAT_URL(z, x, y); SAT.cache.set(key, im); if (SAT.cache.size > 600){ const k0 = SAT.cache.keys().next().value; SAT.cache.delete(k0); } return im; }
+function drawSat(pr){
+  const z = Math.max(2, Math.min(19, Math.round(Math.log2(2*Math.PI*R*V.k/256)))), n = 2**z;
+  const lon2x = lo => Math.floor((lo + 180)/360*n), lat2y = la => { const r = la*Math.PI/180; return Math.floor((1 - Math.log(Math.tan(r) + 1/Math.cos(r))/Math.PI)/2*n); };
+  const x2lon = x => x/n*360 - 180, y2lat = y => { const m = Math.PI - 2*Math.PI*y/n; return 180/Math.PI*Math.atan(.5*(Math.exp(m) - Math.exp(-m))); };
+  const d = Math.min(80, visDeg()*1.15), la0 = Math.max(-84, V.lat - d), la1 = Math.min(84, V.lat + d), dl = Math.min(179, d/Math.max(.2, Math.cos(V.lat*Math.PI/180)));
+  const x0 = lon2x(V.lon - dl), x1 = lon2x(V.lon + dl), y0 = lat2y(la1), y1 = lat2y(la0); let cnt = 0;
+  ctx.save(); if (V.mode === "3d"){ ctx.beginPath(); d3.geoPath(pr, ctx)({type:"Sphere"}); ctx.clip(); }
+  for (let ty = Math.max(0, y0); ty <= Math.min(n - 1, y1); ty++) for (let tx = x0; tx <= x1; tx++){ if (++cnt > 90) break; const xx = ((tx % n) + n) % n;
+    const lo0 = x2lon(tx), lo1 = x2lon(tx + 1), la_0 = y2lat(ty), la_1 = y2lat(ty + 1);
+    if (!frontOf([(lo0 + lo1)/2, (la_0 + la_1)/2])) continue;
+    const a = pr([lo0, la_0]), b = pr([lo1, la_0]), c = pr([lo0, la_1]); if (!a || !b || !c) continue;
+    const im = satTile(z, xx, ty); if (!im.ok) continue;
+    ctx.setTransform(DPR*(b[0] - a[0])/256, DPR*(b[1] - a[1])/256, DPR*(c[0] - a[0])/256, DPR*(c[1] - a[1])/256, DPR*a[0], DPR*a[1]); ctx.drawImage(im, 0, 0, 256.6, 256.6); }
+  ctx.restore(); ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+function render(){
+  const pr = proj(), path = d3.geoPath(pr, ctx), t = performance.now();
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
+  // espacio
+  ctx.fillStyle = "#03060B"; ctx.fillRect(0, 0, W, H);
+  stars.forEach(s => { ctx.fillStyle = `rgba(200,230,255,${(.25 + .5*s[3]).toFixed(2)})`; ctx.fillRect(s[0]*W, s[1]*H, s[2], s[2]); });
+  // atmósfera
+  if (V.mode === "3d"){ const r = R*V.k;
+    if (r < Math.max(W, H)*1.5){ const g = ctx.createRadialGradient(W/2, H/2, r*.92, W/2, H/2, r*1.22); g.addColorStop(0, `rgba(${ACC},.32)`); g.addColorStop(.35, `rgba(${ACC},.10)`); g.addColorStop(1, `rgba(${ACC},0)`);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(W/2, H/2, r*1.22, 0, 7); ctx.fill(); }
+  }
+  // océano
+  ctx.beginPath(); path({type:"Sphere"}); const og = ctx.createRadialGradient(W/2 - R*V.k*.3, H/2 - R*V.k*.3, 0, W/2, H/2, R*V.k*1.05);
+  og.addColorStop(0, "#0B2236"); og.addColorStop(1, "#040B14"); ctx.fillStyle = V.mode === "3d" ? og : "#06111C"; ctx.fill();
+  ctx.lineWidth = 1; ctx.strokeStyle = `rgba(${ACC},.07)`; ctx.beginPath(); path(grat); ctx.stroke();
+  // países
+  const W0 = (V.k >= 2.2 && G.w50) ? G.w50 : G.w110;
+  if (W0){ W0.features.forEach(f => { if (!inView(f)) return; ctx.beginPath(); path(f);
+      const w = isWorked(f), s = sel.c && sel.c.properties.iso === f.properties.iso;
+      ctx.fillStyle = w && V.k < 3.2 ? `rgba(${DONE},.20)` : s && V.k < 3.2 ? `rgba(${ACC},.10)` : "rgba(18,40,58,.78)"; ctx.fill();
+      ctx.lineWidth = s || hover === f ? 1.6 : .8; ctx.strokeStyle = w ? `rgba(${DONE},.75)` : `rgba(${ACC},${s || hover === f ? .95 : .42})`; ctx.stroke(); }); }
+  // imagen satelital (teselas Esri World Imagery)
+  if (SAT.on && V.k > 3) drawSat(pr);
+  // provincias / estados
+  const showA1 = V.k >= 3.2 && G.a1, iso = sel.c ? sel.c.properties.iso : null;
+  if (V.k >= 3.2){
+    const list = [...(G.e1 ? G.e1.features : []), ...(showA1 ? G.a1.features : [])];
+    list.forEach(f => { if (!inView(f)) return; ctx.beginPath(); path(f); const w = isWorked(f), s = sel.a1 === f;
+      const deep = V.k >= 9 && f.kind === "e1"; if (!deep && (w || s || hover === f)){ ctx.fillStyle = w ? `rgba(${DONE},.22)` : `rgba(${ACC},.12)`; ctx.fill(); }
+      ctx.lineWidth = s || hover === f ? 1.4 : .6; ctx.strokeStyle = w ? `rgba(${DONE},.7)` : `rgba(${ACC},${f.kind === "e1" ? .55 : .3})`; ctx.stroke(); });
+  }
+  // cantones de Ecuador
+  if (V.k >= 9 && G.e2){ G.e2.features.forEach(f => { if (!inView(f)) return; ctx.beginPath(); path(f); const w = isWorked(f), s = sel.a2 === f;
+      if (w || s || hover === f){ ctx.fillStyle = w ? `rgba(${DONE},.28)` : `rgba(${ACC},.14)`; ctx.fill(); }
+      ctx.setLineDash(V.k < 30 ? [3, 3] : []); ctx.lineWidth = s || hover === f ? 1.3 : .55; ctx.strokeStyle = w ? `rgba(${DONE},.75)` : `rgba(${ACC},.35)`; ctx.stroke(); ctx.setLineDash([]); }); }
+  // terreno del proyecto activo / borrador
+  [...sortedP().filter(p => p.terreno && p.terreno.geo), ...(draft && draft.terreno ? [{terreno:draft.terreno, draft:1}] : [])].forEach(p => {
+    const g = {type:"Polygon", coordinates:[[...p.terreno.geo, p.terreno.geo[0]].reverse()]};
+    if (V.k < 60) return; ctx.beginPath(); path(g); ctx.fillStyle = `rgba(${DONE},.25)`; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = `rgb(${DONE})`; ctx.stroke(); });
+  // trayectoria: arcos curvos entre proyectos
+  const ps = sortedP(); ctx.lineCap = "round";
+  for (let i = 1; i < ps.length; i++){ const a = [+ps[i-1].loc.lon, +ps[i-1].loc.lat], b = [+ps[i].loc.lon, +ps[i].loc.lat], ip = d3.geoInterpolate(a, b), dist = d3.geoDistance(a, b);
+    const lift = Math.min(.35, .04 + dist*.25); ctx.beginPath(); let started = false;
+    for (let s = 0; s <= 48; s++){ const q = s/48, ll = ip(q), p = pr(ll); if (!p || !frontOf(ll)){ started = false; continue; }
+      const h = 1 + lift*Math.sin(Math.PI*q), x = W/2 + (p[0] - W/2)*(V.mode === "3d" ? h : 1), y = H/2 + (p[1] - H/2)*(V.mode === "3d" ? h : 1) - (V.mode === "2d" ? lift*80*Math.sin(Math.PI*q) : 0);
+      if (!started){ ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y); }
+    ctx.strokeStyle = `rgba(${DONE},.18)`; ctx.lineWidth = 6; ctx.stroke(); ctx.strokeStyle = `rgba(${DONE},.85)`; ctx.lineWidth = 1.6; ctx.stroke();
+    // pulso que viaja por el arco
+    if (!reduce){ const q = ((t/2600) + i*.17) % 1, ll = ip(q), p = pr(ll); if (p && frontOf(ll)){ const h = 1 + lift*Math.sin(Math.PI*q), x = W/2 + (p[0]-W/2)*(V.mode === "3d" ? h : 1), y = H/2 + (p[1]-H/2)*(V.mode === "3d" ? h : 1) - (V.mode === "2d" ? lift*80*Math.sin(Math.PI*q) : 0);
+      ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(x, y, 2.4, 0, 7); ctx.fill(); } }
+  }
+  // etiquetas
+  ctx.textAlign = "center"; ctx.textBaseline = "middle"; const boxes = [];
+  const label = (ll, txt, size, col, weight) => { if (!frontOf(ll)) return; const p = pr(ll); if (!p) return; ctx.font = `${weight||500} ${size}px "Chakra Petch",system-ui`;
+    const w = ctx.measureText(txt).width + 8, h = size + 4, bx = [p[0] - w/2, p[1] - h/2, w, h];
+    if (bx[0] < 60 || bx[0] + w > W - 10 || boxes.some(o => !(bx[0] > o[0] + o[2] || bx[0] + w < o[0] || bx[1] > o[1] + o[3] || bx[1] + h < o[1]))) return;
+    boxes.push(bx); ctx.lineWidth = 3; ctx.strokeStyle = "rgba(3,6,11,.9)"; ctx.strokeText(txt, p[0], p[1]); ctx.fillStyle = col; ctx.fillText(txt, p[0], p[1]); };
+  ps.forEach(p => { const ll = [+p.loc.lon, +p.loc.lat]; if (!frontOf(ll)) return; const q = pr(ll); if (!q) return;
+    ctx.fillStyle = `rgba(${DONE},.25)`; ctx.beginPath(); ctx.arc(q[0], q[1], 9 + (reduce ? 0 : 3*Math.sin(t/400)), 0, 7); ctx.fill();
+    ctx.fillStyle = `rgb(${DONE})`; ctx.strokeStyle = "#03060B"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(q[0], q[1], 5, 0, 7); ctx.fill(); ctx.stroke();
+    if (V.k > 1.4) label([ll[0], ll[1]], p.nombre || "Proyecto", 12, `rgb(${DONE})`, 600); });
+  if (G.cities && V.k >= 2.4){ const mr = V.k < 3.5 ? 1 : V.k < 6 ? 3 : V.k < 14 ? 5 : V.k < 40 ? 7 : 10, d = visDeg()*1.2, cl = Math.max(.2, Math.cos(V.lat*Math.PI/180)); let n = 0;
+    for (const c of G.cities){ if (c[4] > mr) break; if (Math.abs(c[1] - V.lat) > d) continue; let dl = Math.abs(((c[0] - V.lon + 540) % 360) - 180); if (dl > d/cl && d < 90) continue;
+      const ll = [c[0], c[1]]; if (!frontOf(ll)) continue; const q = pr(ll); if (!q || q[0] < 60 || q[0] > W - 10 || q[1] < 0 || q[1] > H) continue;
+      const sz = c[5] ? 12.5 : c[3] > 1e6 ? 12 : 11, txt = c[2]; ctx.font = `${c[5] ? 600 : 500} ${sz}px "Chakra Petch",system-ui`; const w = ctx.measureText(txt).width + 14, h = sz + 4, bx = [q[0] - 4, q[1] - h/2, w, h];
+      if (boxes.some(o => !(bx[0] > o[0] + o[2] || bx[0] + w < o[0] || bx[1] > o[1] + o[3] || bx[1] + h < o[1]))) continue; boxes.push(bx);
+      ctx.fillStyle = c[5] ? "#FFD27A" : "#F5F1E6"; ctx.beginPath(); if (c[5]){ ctx.rect(q[0] - 3, q[1] - 3, 6, 6); } else ctx.arc(q[0], q[1], 2.6, 0, 7); ctx.fill();
+      ctx.textAlign = "left"; ctx.lineWidth = 3; ctx.strokeStyle = "rgba(3,6,11,.9)"; ctx.strokeText(txt, q[0] + 7, q[1]); ctx.fillStyle = c[5] ? "#FFE3A6" : "#F2EEE4"; ctx.fillText(txt, q[0] + 7, q[1]); ctx.textAlign = "center";
+      if (++n > 220) break; } }
+  if (V.k >= 9 && G.e2) G.e2.features.forEach(f => { if (inView(f) && f.ar > 2e-6/V.k) label(f.lab, f.properties.n, 11.5, isWorked(f) ? `rgb(${DONE})` : "#CFE6F7"); });
+  if (V.k >= 3.2){ (G.e1 ? G.e1.features : []).forEach(f => inView(f) && label(f.lab, f.properties.n, V.k >= 9 ? 13 : 12, isWorked(f) ? `rgb(${DONE})` : "#E4EEFA", 600));
+    if (showA1) G.a1.features.forEach(f => { if (inView(f) && f.ar*V.k*V.k > .0006) label(f.lab, f.properties.n, 11, isWorked(f) ? `rgb(${DONE})` : "#B9D3E6"); }); }
+  if (W0 && V.k < 9) W0.features.slice().sort((a,b) => b.ar - a.ar).forEach(f => { if (inView(f) && f.ar*V.k*V.k > .0009) label(f.lab, f.properties.n, V.k < 2 ? 11 : 12.5, isWorked(f) ? `rgb(${DONE})` : "rgba(228,238,250,.85)", 600); });
+  // borde holográfico del planeta
+  if (V.mode === "3d"){ ctx.beginPath(); path({type:"Sphere"}); ctx.lineWidth = 1.2; ctx.strokeStyle = `rgba(${ACC},.55)`; ctx.stroke();
+    if (!reduce && R*V.k < Math.max(W,H)){ const yy = H/2 - R*V.k + ((t/18) % (2*R*V.k)); ctx.save(); ctx.beginPath(); path({type:"Sphere"}); ctx.clip();
+      const g = ctx.createLinearGradient(0, yy - 30, 0, yy + 30); g.addColorStop(0, `rgba(${ACC},0)`); g.addColorStop(.5, `rgba(${ACC},.10)`); g.addColorStop(1, `rgba(${ACC},0)`); ctx.fillStyle = g; ctx.fillRect(0, yy - 30, W, 60); ctx.restore(); } }
+}
+let lastLive = 0;
+function loop(){
+  requestAnimationFrame(loop);
+  if (document.hidden) return;
+  const now = Date.now(), wOpen = !!document.querySelector(".win:not([hidden])"), live = !reduce && !wOpen && (sortedP().length > 1 || (V.mode === "3d" && R*V.k < Math.max(W, H)));
+  if (!mode && !anim && V.k < 1.3 && now - idleAt > 7000 && V.mode === "3d" && !reduce && !wOpen){ V.lon += .03; dirty = true; }
+  if (dirty || (live && now - lastLive > 33)){ dirty = false; lastLive = now; render(); }
+}
+requestAnimationFrame(loop);
+
+/* ---------- interacción: girar, acercar, pellizcar ---------- */
+const ptrs = new Map(); let drag = null, pinch = null, moved = 0;
+function rotBy(dx, dy){ const s = 57.2958/(R*V.k*(V.mode === "2d" ? 1/1.6 : 1)); V.lon -= dx*s; V.lat = Math.max(-85, Math.min(85, V.lat + dy*s)); dirty = true; }
+function zoomAt(f, mx, my){ const before = proj().invert([mx, my]); const ok = before && isFinite(before[0]) && (V.mode === "2d" || d3.geoDistance(before, [V.lon, V.lat]) < Math.PI/2*.97);
+  V.k = Math.max(.8, Math.min(9000, V.k*f));
+  if (ok){ for (let i = 0; i < 12; i++){ const q = proj()(before); if (!q) break; const ex = q[0] - mx, ey = q[1] - my; if (Math.abs(ex) + Math.abs(ey) < .25) break;
+      const after = proj().invert([mx, my]); if (!after || !isFinite(after[0])) break; const dl = ((before[0] - after[0] + 540) % 360) - 180, dp = before[1] - after[1]; V.lon = ((V.lon + dl + 540) % 360) - 180; V.lat = Math.max(-89, Math.min(89, V.lat + dp)); } }
+  dirty = true; }
+cv.addEventListener("pointerdown", e => { cancelAnimationFrame(anim); anim = null; idleAt = Date.now(); cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  if (ptrs.size === 1){ drag = {x:e.clientX, y:e.clientY}; moved = 0; } if (ptrs.size === 2){ const [a,b] = [...ptrs.values()]; pinch = {d:Math.hypot(a.x-b.x, a.y-b.y)}; } });
+cv.addEventListener("pointermove", e => {
+  if (ptrs.has(e.pointerId)){ const prev = ptrs.get(e.pointerId); ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY}); idleAt = Date.now();
+    if (ptrs.size === 1 && drag){ const dx = e.clientX - prev.x, dy = e.clientY - prev.y; moved += Math.abs(dx) + Math.abs(dy); if (moved > 3) cv.classList.add("drag"); rotBy(dx, dy); }
+    else if (ptrs.size === 2 && pinch){ const [a,b] = [...ptrs.values()], d = Math.hypot(a.x-b.x, a.y-b.y); moved = 99; zoomAt(d/pinch.d, (a.x+b.x)/2, (a.y+b.y)/2); pinch.d = d; }
+    $("#tip").hidden = true; return; }
+  hoverAt(e.clientX, e.clientY);
+});
+const endP = e => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; if (!ptrs.size){ cv.classList.remove("drag"); if (drag && moved < 6) clickAt(e.clientX, e.clientY); drag = null; } };
+cv.addEventListener("pointerup", endP); cv.addEventListener("pointercancel", e => { ptrs.delete(e.pointerId); drag = null; pinch = null; });
+cv.addEventListener("wheel", e => { e.preventDefault(); idleAt = Date.now(); cancelAnimationFrame(anim); anim = null; const dy = e.deltaMode === 1 ? e.deltaY*16 : e.deltaY; zoomAt(Math.exp(-dy*(e.ctrlKey ? .012 : .0016)), e.clientX, e.clientY); }, {passive:false});
+cv.addEventListener("pointerleave", () => { $("#tip").hidden = true; if (hover){ hover = null; dirty = true; } });
+
+function featuresAt(ll){
+  const hit = (fc, kind) => fc ? fc.features.find(f => { const b = f.bb; if (b && b[0][0] <= b[1][0] && (ll[0] < b[0][0] - .01 || ll[0] > b[1][0] + .01 || ll[1] < b[0][1] - .01 || ll[1] > b[1][1] + .01)) return false; return d3.geoContains(f, ll); }) : null;
+  const c = hit(G.w50 || G.w110), out = {c};
+  if (c && c.properties.iso === "ECU"){ out.a1 = hit(G.e1); out.a2 = hit(G.e2); }
+  else if (c && G.a1){ out.a1 = G.a1.features.find(f => f.properties.iso === c.properties.iso && d3.geoContains(f, ll)) || null; }
+  return out;
+}
+function hoverAt(x, y){
+  const ll = proj().invert([x, y]); const tip = $("#tip");
+  if (!ll || (V.mode === "3d" && d3.geoDistance(ll, [V.lon, V.lat]) > Math.PI/2)){ tip.hidden = true; return; }
+  const f = featuresAt(ll), top = (V.k >= 9 && f.a2) || (V.k >= 3.2 && f.a1) || f.c;
+  if (top !== hover){ hover = top || null; dirty = true; }
+  if (!top){ tip.hidden = true; return; }
+  const lvl = top.kind === "c" ? "País" : top.kind === "e2" ? "Cantón" + (top.properties.p ? " · " + top.properties.p : "") : (top.kind === "e1" ? "Provincia" : (top.properties.t || "Provincia / estado"));
+  tip.innerHTML = `<small>${esc(lvl)}</small>${esc(top.properties.n)}${isWorked(top) ? ' · <span style="color:var(--done)">trabajado</span>' : ""}`; tip.hidden = false;
+  tip.style.left = Math.min(W - tip.offsetWidth - 8, x + 14) + "px"; tip.style.top = (y + 16) + "px";
+}
+
+/* ---------- vuelo de cámara ---------- */
+function flyTo(lon, lat, k, ms){
+  cancelAnimationFrame(anim); const a = {...V}, t0 = performance.now(), D = reduce ? 0 : (ms || 1400);
+  let dl = ((lon - a.lon + 540) % 360) - 180;
+  const step = now => { let q = D ? Math.min(1, (now - t0)/D) : 1; q = q < .5 ? 4*q*q*q : 1 - Math.pow(-2*q + 2, 3)/2;
+    const z = Math.exp(Math.log(a.k) + (Math.log(k) - Math.log(a.k))*q), mid = Math.sin(Math.PI*q)*.35;
+    V.lon = a.lon + dl*q; V.lat = a.lat + (lat - a.lat)*q; V.k = z*(1 - mid*(a.k > 2 && k > 2 ? .6 : 0)); dirty = true;
+    if (q < 1) anim = requestAnimationFrame(step); else { anim = null; V.k = k; } };
+  anim = requestAnimationFrame(step);
+}
+function mainBounds(f){ const g = f.geometry; if (!g || g.type !== "MultiPolygon") return d3.geoBounds(f);
+  const parts = g.coordinates.map(c => ({type:"Polygon", coordinates:c})).map(p => ({p, a:d3.geoArea(p)})); const mx = Math.max(...parts.map(o => o.a));
+  return d3.geoBounds({type:"MultiPolygon", coordinates: parts.filter(o => o.a >= mx*.1).map(o => o.p.coordinates)}); }
+function fitFeature(f, pad){ const b = mainBounds(f), c = d3.geoCentroid(largest(f)); let dLon = b[1][0] - b[0][0]; if (dLon < 0) dLon += 360; const dLat = b[1][1] - b[0][1];
+  const span = Math.max(dLat, dLon*Math.cos(c[1]*Math.PI/180), .01); const k = Math.max(1, Math.min(9000, (V.mode === "2d" ? 1 : 1)*95/(span*(pad || 1.25))));
+  flyTo(c[0], c[1], k); }
+
+/* ---------- clic ---------- */
+function clickAt(x, y){
+  const ll = proj().invert([x, y]); if (!ll || (V.mode === "3d" && d3.geoDistance(ll, [V.lon, V.lat]) > Math.PI/2)) return;
+  // tocar un pin de proyecto
+  const pr = proj(); const near = sortedP().find(p => { const q = pr([+p.loc.lon, +p.loc.lat]); return q && frontOf([+p.loc.lon, +p.loc.lat]) && Math.hypot(q[0] - x, q[1] - y) < 14; });
+  if (near && !mode) return openCard(near);
+  if (mode === "pick") return pickLocation(ll);
+  const f = featuresAt(ll);
+  if (!f.c) return;
+  if (!sel.c || sel.c.properties.iso !== f.c.properties.iso || V.k < 3){ sel = {c:f.c, a1:null, a2:null}; crumbs(); return fitFeature(f.c); }
+  if (f.a1 && sel.a1 !== f.a1){ sel.a1 = f.a1; sel.a2 = null; crumbs(); return fitFeature(f.a1, 1.1); }
+  if (f.a2){ sel.a1 = f.a1 || sel.a1; sel.a2 = f.a2; crumbs(); return fitFeature(f.a2, 1.15); }
+}
+function crumbs(){
+  const parts = [`<button data-cr="w">MUNDO</button>`];
+  if (sel.c) parts.push(`<button data-cr="c">${esc(sel.c.properties.n.toUpperCase())}</button>`);
+  if (sel.a1) parts.push(`<button data-cr="a1">${esc(sel.a1.properties.n.toUpperCase())}</button>`);
+  if (sel.a2) parts.push(`<button data-cr="a2">${esc(sel.a2.properties.n.toUpperCase())}</button>`);
+  $("#crumbs").innerHTML = parts.join("<i> › </i>"); dirty = true;
+}
+$("#crumbs").addEventListener("click", e => { const b = e.target.closest("[data-cr]"); if (!b) return; const k = b.dataset.cr;
+  if (k === "w") return goWorld(); if (k === "c"){ sel.a1 = sel.a2 = null; crumbs(); return fitFeature(sel.c); } if (k === "a1"){ sel.a2 = null; crumbs(); return fitFeature(sel.a1, 1.1); } fitFeature(sel.a2, 1.15); });
+function goWorld(){ sel = {c:null, a1:null, a2:null}; crumbs(); flyTo(V.lon, Math.max(-30, Math.min(30, V.lat)), 1, 1500); }
+$("#tworld").onclick = goWorld;
+$("#mSat").onclick = () => { $("#tsat").click(); mDraw(); };
+$("#tsat").onclick = () => { SAT.on = !SAT.on; $("#tsat").setAttribute("aria-pressed", String(SAT.on)); try { localStorage.setItem("dion-sat", SAT.on ? "1" : ""); } catch(e){} dirty = true; };
+try { if (localStorage.getItem("dion-sat")){ SAT.on = true; $("#tsat").setAttribute("aria-pressed", "true"); } } catch(e){}
+$("#t3d").onclick = () => { V.mode = "3d"; $("#t3d").setAttribute("aria-pressed", "true"); $("#t2d").setAttribute("aria-pressed", "false"); dirty = true; };
+$("#t2d").onclick = () => { V.mode = "2d"; $("#t2d").setAttribute("aria-pressed", "true"); $("#t3d").setAttribute("aria-pressed", "false"); dirty = true; };
+
+/* ---------- ficha de proyecto (tocar un pin) ---------- */
+function openCard(p){
+  active = p.id; const L = p.loc || {}, o = BYID[p.tipo], t = p.terreno;
+  $("#side").innerHTML = `<h3>${esc((p.nombre || "Proyecto").toUpperCase())}</h3><p class="sub">${esc(o ? o.n : "Sin tipología")}</p>
+    <div class="kv"><div><small>País</small><b>${esc(L.pais || "—")}</b></div><div><small>Provincia</small><b>${esc(L.provincia || "—")}</b></div><div><small>Cantón</small><b>${esc(L.canton || "—")}</b></div><div><small>Terreno</small><b>${t ? t.area.toFixed(1) + " m²" : "Sin trazar"}</b></div></div>
+    <div class="acts"><button class="btn pri" data-pc="ctx">${t ? "Continuar proyecto" : "Abrir proyecto"}</button><button class="btn" data-pc="linea">Línea del proyecto</button><button class="btn" data-pc="terreno">${t ? "Editar terreno" : "Trazar terreno"}</button><button class="btn" data-pc="flujo">Flujo (Atlas)</button><button class="btn ghost" data-pc="x">Cerrar</button></div>`;
+  $("#side").hidden = false; $("#fab-ctx").hidden = !t; flyTo(+L.lon, +L.lat, Math.max(V.k, 60));
+}
+$("#side").addEventListener("click", e => { const b = e.target.closest("[data-pc]"); if (!b) return; const k = b.dataset.pc, p = P.find(x => x.id === active);
+  if (k === "x"){ $("#side").hidden = true; return; } if (k === "ctx"){ $("#side").hidden = true; return window.DIONCORE.startProject(p); } if (k === "linea"){ active = p.id; window.DIONCORE.openLinea(); window.DIONCORE.openMonitor(); return; } if (k === "flujo") return openTool("flujo", {open:{id:p.id, page:"linea"}});
+  if (k === "terreno"){ draft = {id:p.id, nombre:p.nombre, tipo:p.tipo, lon:+p.loc.lon, lat:+p.loc.lat, existing:p}; $("#side").hidden = true; openMesa(); } });
+
+/* ---------- crear proyecto ---------- */
+$("#fab-new").onclick = () => { closeStage(); $("#side").hidden = true; $("#ctx").hidden = true; mode = "pick"; cv.classList.add("pick"); hint("Toca el lugar del proyecto en el planeta. Acércate todo lo que necesites."); };
+function hint(t){ const h = $("#hint"); h.textContent = t || ""; h.hidden = !t; }
+function pickLocation(ll){
+  mode = null; cv.classList.remove("pick"); hint("");
+  const f = featuresAt(ll); if (!f.c) return toast("Toca tierra firme dentro de un país");
+  const u = toUTM(ll[0], ll[1]);
+  draft = {id:uid("f"), lon:ll[0], lat:ll[1], pais:f.c.properties.n, iso:f.c.properties.iso, provincia:f.a1 ? f.a1.properties.n : "", canton:f.a2 ? f.a2.properties.n : "", utm:u, nombre:"", tipo:"", terreno:null};
+  sel = {c:f.c, a1:f.a1 || null, a2:f.a2 || null}; crumbs(); flyTo(ll[0], ll[1], Math.max(V.k, 260));
+  showDraft();
+}
+function typeOptions(cur){ const byCat = {}; TYPES.forEach(t => (byCat[t.catn] = byCat[t.catn] || []).push(t));
+  return `<option value="">Elegir tipología…</option>` + Object.keys(byCat).map(c => `<optgroup label="${esc(c)}">${byCat[c].map(t => `<option value="${t.id}" ${t.id === cur ? "selected" : ""}>${esc(t.n)}</option>`).join("")}</optgroup>`).join(""); }
+function showDraft(){
+  const d = draft, u = d.utm, t = d.terreno;
+  $("#side").innerHTML = `<h3>NUEVO PROYECTO</h3><p class="sub">Los datos de ubicación se llenaron solos con el punto que tocaste.</p>
+    <label class="f">Nombre del proyecto<input id="dN" value="${esc(d.nombre)}" placeholder="Ej. Tiny house La Aurora"></label>
+    <label class="f">Tipología<select id="dT">${typeOptions(d.tipo)}</select></label>
+    <label class="f">Cliente / entidad<input id="dCl" value="${esc(d.cliente || "")}" placeholder="Ej. GAD Municipal de Daule"></label>
+    <label class="f">Parroquia / sector<input id="dPq" value="${esc(d.parroquia || "")}" placeholder="Ej. La Aurora (Satélite)"></label>
+    <div class="kv"><div><small>País</small><b>${esc(d.pais)}</b></div><div><small>${d.iso === "ECU" ? "Provincia" : "Provincia / estado"}</small><b>${esc(d.provincia || "—")}</b></div>
+      <div><small>Cantón</small><b>${esc(d.canton || (d.iso === "ECU" ? "—" : "No disponible"))}</b></div><div class="mono"><small>Lat, Lon</small><b>${d.lat.toFixed(6)}<br>${d.lon.toFixed(6)}</b></div>
+      <div class="mono"><small>UTM ${u.zone}${u.south ? "S" : "N"} · Este</small><b>${u.E.toFixed(2)}</b></div><div class="mono"><small>Norte</small><b>${u.N.toFixed(2)}</b></div>
+      ${t ? `<div><small>Área del terreno</small><b style="color:var(--done)">${t.area.toFixed(2)} m²</b></div><div><small>Perímetro</small><b>${t.per.toFixed(2)} m</b></div>` : ""}</div>
+    <div class="acts"><button class="btn ${t ? "" : "pri"}" id="dDraw">${t ? "Editar terreno" : "Trazar terreno"}</button><button class="btn ${t ? "ok" : ""}" id="dSave">Guardar proyecto</button><button class="btn ghost" id="dX">Cancelar</button></div>
+    <div class="acts"><a class="btn sm" target="_blank" rel="noopener" href="https://earth.google.com/web/@${d.lat},${d.lon},30a,600d,35y,0h,0t,0r">Ver en Google Earth</a><a class="btn sm" target="_blank" rel="noopener" href="https://www.google.com/maps/@${d.lat},${d.lon},250m/data=!3m1!1e3">Google Maps satélite</a></div>`;
+  $("#side").hidden = false;
+  $("#dN").oninput = e => d.nombre = e.target.value; $("#dCl").oninput = e => d.cliente = e.target.value; $("#dPq").oninput = e => d.parroquia = e.target.value; $("#dT").onchange = e => d.tipo = e.target.value;
+  $("#dDraw").onclick = openMesa; $("#dX").onclick = () => { draft = null; $("#side").hidden = true; dirty = true; }; $("#dSave").onclick = saveDraft;
+}
+async function saveDraft(){
+  const d = draft; if (!d.nombre.trim()) return toast("Ponle nombre al proyecto");
+  const now = Date.now(), tz = d.iso === "ECU" ? (d.provincia === "Galápagos" ? "Pacific/Galapagos" : "America/Guayaquil") : "UTC";
+  const doc = {nombre:d.nombre.trim(), tipo:d.tipo, cliente:(d.cliente || "").trim(), codigo:"", ini:"", creado:now, actualizado:now, estado:"activo", sesion:"", iso:d.iso, tz,
+    loc:{pais:d.pais, provincia:d.provincia, canton:d.canton, ciudad:d.canton, parroquia:(d.parroquia || "").trim(), direccion:"", lat:d.lat.toFixed(6), lon:d.lon.toFixed(6), catastro:""},
+    datos:{terreno: d.terreno ? d.terreno.area.toFixed(2) : "", construccion:"", pisos:""}, flags:suggestFlags(d.tipo), mat:{}, st:{}, nt:{}, lk:{}, im:{}, ap:{},
+    bor:{programa:{filas:[], circ:25}, peticiones:[], ideas:"", correcciones:[], zon:[], burb:[], bocetos:[], rel:{}}, ej:[], terreno:d.terreno || null};
+  try { await saveProject(d.id, doc); } catch(e){ return toast("No se pudo guardar. Revisa la conexión."); }
+  P = [...P.filter(x => x.id !== d.id), {id:d.id, ...doc}]; computeWorked(); active = d.id; draft = null; $("#side").hidden = true; dirty = true;
+  toast("Proyecto creado"); if (doc.terreno) $("#fab-ctx").hidden = false; openCard(P.find(x => x.id === active)); $("#side").hidden = true; window.DIONCORE.startProject(P.find(x => x.id === active), {station:"arranque"});
+}
+
+/* ---------- mesa del terreno ---------- */
+const M = {pts:[], hist:[], fut:[], tool:"draw", s:4, ox:0, oy:0, img:null, imgX:0, imgY:0, imgW:100, imgO:.6, drag:null};
+const mc = $("#mcv"), mx = mc.getContext("2d");
+function openMesa(){
+  const d = draft; M.u0 = toUTM(d.lon, d.lat); M.pts = []; M.hist = []; M.fut = [];
+  const ex = d.existing && d.existing.terreno || d.terreno;
+  if (ex && ex.geo) M.pts = ex.geo.map(([lo, la]) => { const u = toUTM(lo, la, M.u0.zone); return [u.E - M.u0.E, u.N - M.u0.N]; });
+  $("#mZone").textContent = `${M.u0.zone}${M.u0.south ? "S" : "N"}`;
+  $("#mGE").href = `https://earth.google.com/web/@${d.lat},${d.lon},30a,400d,35y,0h,0t,0r`; $("#mGM").href = `https://www.google.com/maps/@${d.lat},${d.lon},120m/data=!3m1!1e3`;
+  $("#mesa").hidden = false; requestAnimationFrame(() => { mResize(); mFit(); });
+}
+function mResize(){ const r = mc.getBoundingClientRect(), dp = Math.min(2, devicePixelRatio || 1); mc.width = r.width*dp; mc.height = r.height*dp; mx.setTransform(dp, 0, 0, dp, 0, 0); M.w = r.width; M.h = r.height; mDraw(); }
+addEventListener("resize", () => { if (!$("#mesa").hidden) mResize(); });
+const m2s = (x, y) => [M.w/2 + (x - M.ox)*M.s, M.h/2 - (y - M.oy)*M.s];
+const s2m = (X, Y) => [(X - M.w/2)/M.s + M.ox, -(Y - M.h/2)/M.s + M.oy];
+function mFit(){ if (M.pts.length < 2){ M.ox = 0; M.oy = 0; M.s = Math.min(M.w, M.h)/120; return mDraw(); }
+  const xs = M.pts.map(p => p[0]), ys = M.pts.map(p => p[1]); M.ox = (Math.min(...xs) + Math.max(...xs))/2; M.oy = (Math.min(...ys) + Math.max(...ys))/2;
+  M.s = Math.min(M.w/(Math.max(...xs) - Math.min(...xs) + 10), M.h/(Math.max(...ys) - Math.min(...ys) + 10))*.8; mDraw(); }
+function polyStats(pts){ if (pts.length < 3) return {area:0, per: pts.length === 2 ? Math.hypot(pts[1][0]-pts[0][0], pts[1][1]-pts[0][1]) : 0};
+  let a = 0, p = 0; for (let i = 0; i < pts.length; i++){ const [x1,y1] = pts[i], [x2,y2] = pts[(i+1)%pts.length]; a += x1*y2 - x2*y1; p += Math.hypot(x2-x1, y2-y1); } return {area:Math.abs(a)/2, per:p}; }
+function mDraw(){
+  if (!M.w) return; const c = mx; c.clearRect(0, 0, M.w, M.h); c.fillStyle = "#03070C"; c.fillRect(0, 0, M.w, M.h);
+  if (SAT.on && M.u0){ const ll = (x, y) => fromUTM(M.u0.E + x, M.u0.N + y, M.u0.zone, M.u0.south), loc = (lo, la) => { const u = toUTM(lo, la, M.u0.zone); return m2s(u.E - M.u0.E, u.N - M.u0.N); };
+    const mpp = 1/M.s, z = Math.max(3, Math.min(19, Math.round(Math.log2(156543*Math.cos(M.u0.lat0 || 0)/mpp)))), n = 2**z, c0 = ll(...s2m(0, 0)), c1 = ll(...s2m(M.w, M.h));
+    const lon2x = lo => Math.floor((lo + 180)/360*n), lat2y = la => { const r = la*Math.PI/180; return Math.floor((1 - Math.log(Math.tan(r) + 1/Math.cos(r))/Math.PI)/2*n); };
+    const x2lon = x => x/n*360 - 180, y2lat = y => { const m = Math.PI - 2*Math.PI*y/n; return 180/Math.PI*Math.atan(.5*(Math.exp(m) - Math.exp(-m))); }; let k2 = 0;
+    for (let ty = lat2y(Math.max(c0[1], c1[1])); ty <= lat2y(Math.min(c0[1], c1[1])); ty++) for (let tx = lon2x(Math.min(c0[0], c1[0])); tx <= lon2x(Math.max(c0[0], c1[0])); tx++){ if (++k2 > 80) break;
+      const im = satTile(z, tx, ty); if (!im.ok){ im.onload = () => { im.ok = 1; mDraw(); }; continue; } const a = loc(x2lon(tx), y2lat(ty)), b = loc(x2lon(tx + 1), y2lat(ty)), cc = loc(x2lon(tx), y2lat(ty + 1));
+      c.save(); c.transform((b[0] - a[0])/256, (b[1] - a[1])/256, (cc[0] - a[0])/256, (cc[1] - a[1])/256, a[0], a[1]); c.drawImage(im, 0, 0, 256.6, 256.6); c.restore(); } }
+  if (M.img){ const iw = M.imgW*M.s, ih = iw*M.img.height/M.img.width, [X, Y] = m2s(M.imgX, M.imgY); c.globalAlpha = M.imgO; c.drawImage(M.img, X - iw/2, Y - ih/2, iw, ih); c.globalAlpha = 1; }
+  // cuadrícula métrica
+  const steps = [0.5,1,2,5,10,20,50,100,200,500,1000], st = steps.find(v => v*M.s >= 28) || 1000, [x0, y1] = s2m(0, 0), [x1, y0] = s2m(M.w, M.h);
+  c.lineWidth = 1; for (let x = Math.floor(x0/st)*st; x <= x1; x += st){ const [X] = m2s(x, 0); c.strokeStyle = Math.round(x/st) % 5 === 0 ? "rgba(120,200,255,.16)" : "rgba(120,200,255,.06)"; c.beginPath(); c.moveTo(X, 0); c.lineTo(X, M.h); c.stroke(); }
+  for (let y = Math.floor(y0/st)*st; y <= y1; y += st){ const [, Y] = m2s(0, y); c.strokeStyle = Math.round(y/st) % 5 === 0 ? "rgba(120,200,255,.16)" : "rgba(120,200,255,.06)"; c.beginPath(); c.moveTo(0, Y); c.lineTo(M.w, Y); c.stroke(); }
+  // punto del proyecto
+  const [cx, cy] = m2s(0, 0); c.strokeStyle = "rgba(56,225,255,.6)"; c.beginPath(); c.moveTo(cx - 8, cy); c.lineTo(cx + 8, cy); c.moveTo(cx, cy - 8); c.lineTo(cx, cy + 8); c.stroke();
+  // polígono
+  const pts = M.pts;
+  if (pts.length){ c.beginPath(); pts.forEach((p, i) => { const [X, Y] = m2s(p[0], p[1]); i ? c.lineTo(X, Y) : c.moveTo(X, Y); }); if (pts.length > 2){ c.closePath(); c.fillStyle = "rgba(182,255,60,.12)"; c.fill(); }
+    c.lineWidth = 2; c.strokeStyle = "#B6FF3C"; c.shadowColor = "#B6FF3C"; c.shadowBlur = 8; c.stroke(); c.shadowBlur = 0;
+    c.font = '11px "JetBrains Mono",monospace'; c.textAlign = "center"; c.textBaseline = "middle";
+    pts.forEach((p, i) => { if (pts.length < 2 || (i === pts.length - 1 && pts.length < 3)) return; const q = pts[(i+1)%pts.length], L = Math.hypot(q[0]-p[0], q[1]-p[1]); const [X1,Y1] = m2s(p[0],p[1]), [X2,Y2] = m2s(q[0],q[1]);
+      if (Math.hypot(X2-X1, Y2-Y1) < 40) return; c.lineWidth = 3; c.strokeStyle = "#03070C"; c.strokeText(L.toFixed(2) + " m", (X1+X2)/2, (Y1+Y2)/2); c.fillStyle = "#E4EEFA"; c.fillText(L.toFixed(2) + " m", (X1+X2)/2, (Y1+Y2)/2); });
+    pts.forEach((p, i) => { const [X, Y] = m2s(p[0], p[1]); c.fillStyle = i === 0 ? "#38E1FF" : "#03070C"; c.strokeStyle = "#38E1FF"; c.lineWidth = 2; c.beginPath(); c.arc(X, Y, i === 0 ? 7 : 5.5, 0, 7); c.fill(); c.stroke();
+      c.fillStyle = "#8CA0B6"; c.fillText(String(i+1), X + 12, Y - 12); }); }
+  // norte y escala
+  c.fillStyle = "#E4EEFA"; c.font = '600 12px "Chakra Petch"'; c.textAlign = "center"; c.fillText("N", M.w - 30, 22); c.strokeStyle = "#38E1FF"; c.lineWidth = 2; c.beginPath(); c.moveTo(M.w - 30, 30); c.lineTo(M.w - 30, 58); c.moveTo(M.w - 36, 38); c.lineTo(M.w - 30, 30); c.lineTo(M.w - 24, 38); c.stroke();
+  const sb = st*2; c.fillRect(16, M.h - 22, sb*M.s, 3); c.font = '10px "JetBrains Mono"'; c.textAlign = "left"; c.fillText(sb + " m", 16, M.h - 32);
+  const s = polyStats(pts); $("#mArea").textContent = s.area.toFixed(2) + " m²"; $("#mPer").textContent = s.per.toFixed(2) + " m";
+  $("#mRows").innerHTML = pts.map((p, i) => { const q = pts[(i+1)%pts.length], L = pts.length > 1 ? Math.hypot(q[0]-p[0], q[1]-p[1]) : 0;
+    return `<tr><td>${i+1}</td><td><input data-v="${i}:0" value="${(M.u0.E + p[0]).toFixed(2)}" inputmode="decimal"></td><td><input data-v="${i}:1" value="${(M.u0.N + p[1]).toFixed(2)}" inputmode="decimal"></td><td>${L.toFixed(2)}</td><td><button class="btn sm ghost" data-vx="${i}" aria-label="Quitar vértice ${i+1}">×</button></td></tr>`; }).join("");
+}
+function mPush(){ M.hist.push(JSON.stringify(M.pts)); if (M.hist.length > 200) M.hist.shift(); M.fut = []; }
+$("#mUndo").onclick = () => { if (!M.hist.length) return; M.fut.push(JSON.stringify(M.pts)); M.pts = JSON.parse(M.hist.pop()); mDraw(); };
+$("#mRedo").onclick = () => { if (!M.fut.length) return; M.hist.push(JSON.stringify(M.pts)); M.pts = JSON.parse(M.fut.pop()); mDraw(); };
+$("#mFit").onclick = mFit;
+document.querySelectorAll("[data-mt]").forEach(b => b.onclick = () => { M.tool = b.dataset.mt; document.querySelectorAll("[data-mt]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); mc.style.cursor = M.tool === "draw" ? "crosshair" : "grab"; });
+const mptr = new Map(); let mPinch = null, mTaps = 0, mTapT = 0;
+mc.addEventListener("pointerdown", e => {
+  mc.setPointerCapture(e.pointerId); mptr.set(e.pointerId, {x:e.offsetX, y:e.offsetY});
+  // gestos iPad: 2 dedos = deshacer, 3 dedos = rehacer
+  if (mptr.size >= 2){ M.drag = null; const [a, b] = [...mptr.values()]; mPinch = {d:Math.hypot(a.x-b.x, a.y-b.y), s:M.s, n:mptr.size, t:Date.now(), moved:0}; return; }
+  const [X, Y] = [e.offsetX, e.offsetY], m = s2m(X, Y);
+  const hit = M.pts.findIndex(p => { const [px, py] = m2s(p[0], p[1]); return Math.hypot(px - X, py - Y) < 12; });
+  if (M.tool === "draw"){ if (hit === 0 && M.pts.length > 2){ toast("Terreno cerrado"); return; } if (hit >= 0){ mPush(); M.drag = {i:hit}; return; } mPush(); M.pts.push([+m[0].toFixed(3), +m[1].toFixed(3)]); mDraw(); return; }
+  if (M.tool === "edit" && hit >= 0){ mPush(); M.drag = {i:hit}; return; }
+  if (M.tool === "img" && M.img){ M.drag = {img:1, x:X, y:Y, ix:M.imgX, iy:M.imgY}; return; }
+  M.drag = {pan:1, x:X, y:Y, ox:M.ox, oy:M.oy};
+});
+mc.addEventListener("pointermove", e => {
+  if (!mptr.has(e.pointerId)) return; mptr.set(e.pointerId, {x:e.offsetX, y:e.offsetY});
+  if (mPinch && mptr.size >= 2){ const [a, b] = [...mptr.values()], d = Math.hypot(a.x-b.x, a.y-b.y); mPinch.moved += Math.abs(d - (mPinch.last || mPinch.d)); mPinch.last = d; M.s = Math.max(.02, Math.min(400, mPinch.s*d/mPinch.d)); mDraw(); return; }
+  const d = M.drag; if (!d) return; const [X, Y] = [e.offsetX, e.offsetY];
+  if (d.i != null){ const m = s2m(X, Y); M.pts[d.i] = [+m[0].toFixed(3), +m[1].toFixed(3)]; }
+  else if (d.img){ M.imgX = d.ix + (X - d.x)/M.s; M.imgY = d.iy - (Y - d.y)/M.s; }
+  else if (d.pan){ M.ox = d.ox - (X - d.x)/M.s; M.oy = d.oy + (Y - d.y)/M.s; }
+  mDraw();
+});
+const mEnd = e => { mptr.delete(e.pointerId);
+  if (mPinch && !mptr.size){ if (Date.now() - mPinch.t < 300 && mPinch.moved < 10){ if (mPinch.n === 2) $("#mUndo").click(); else if (mPinch.n >= 3) $("#mRedo").click(); } mPinch = null; }
+  if (!mptr.size) M.drag = null; };
+mc.addEventListener("pointerup", mEnd); mc.addEventListener("pointercancel", mEnd);
+mc.addEventListener("wheel", e => { e.preventDefault(); const before = s2m(e.offsetX, e.offsetY); M.s = Math.max(.02, Math.min(400, M.s*Math.exp(-e.deltaY*.0015))); const after = s2m(e.offsetX, e.offsetY); M.ox += before[0] - after[0]; M.oy += before[1] - after[1]; mDraw(); }, {passive:false});
+$("#mRows").addEventListener("change", e => { const t = e.target.closest("[data-v]"); if (!t) return; const [i, k] = t.dataset.v.split(":").map(Number), v = parseFloat(String(t.value).replace(",", "."));
+  if (!isFinite(v)) return mDraw(); mPush(); M.pts[i][k] = +(v - (k ? M.u0.N : M.u0.E)).toFixed(3); mDraw(); });
+$("#mRows").addEventListener("click", e => { const b = e.target.closest("[data-vx]"); if (!b) return; mPush(); M.pts.splice(+b.dataset.vx, 1); mDraw(); });
+function llToLocal(lon, lat){ const u = toUTM(lon, lat, M.u0.zone); return [+(u.E - M.u0.E).toFixed(3), +(u.N - M.u0.N).toFixed(3)]; }
+$("#mPasteOk").onclick = () => { const lines = $("#mPaste").value.split(/\n+/).map(s => s.trim()).filter(Boolean), out = [];
+  lines.forEach(l => { const n = (l.match(/-?\d+(?:[.,]\d+)?/g) || []).map(v => parseFloat(v.replace(",", "."))); if (n.length < 2) return; const [a, b] = n;
+    if (Math.abs(a) <= 90 && Math.abs(b) <= 180) out.push(llToLocal(b, a)); else if (a > 1e5 && b > 1e5) out.push([+(a - M.u0.E).toFixed(3), +(b - M.u0.N).toFixed(3)]); });
+  if (out.length < 3) return toast("Necesito al menos 3 coordenadas válidas"); mPush(); M.pts = out; mFit(); toast(out.length + " vértices cargados"); };
+$("#mKml").onchange = async e => { const f = e.target.files[0]; e.target.value = ""; if (!f) return; const txt = await f.text(); let ring = null;
+  try { if (/<kml|<coordinates/i.test(txt)){ const m = txt.match(/<coordinates>([\s\S]*?)<\/coordinates>/i); if (m) ring = m[1].trim().split(/\s+/).map(s => s.split(",").map(Number)).filter(a => a.length >= 2 && isFinite(a[0])); }
+    else { const g = JSON.parse(txt), ft = g.type === "FeatureCollection" ? g.features[0] : g.type === "Feature" ? g : {geometry:g}, geo = ft.geometry; ring = geo.type === "Polygon" ? geo.coordinates[0] : geo.type === "MultiPolygon" ? geo.coordinates[0][0] : geo.coordinates; } } catch(err){}
+  if (!ring || ring.length < 3) return toast("No encontré un polígono en el archivo");
+  if (ring.length > 3 && ring[0][0] === ring[ring.length-1][0] && ring[0][1] === ring[ring.length-1][1]) ring = ring.slice(0, -1);
+  mPush(); M.pts = ring.map(([lo, la]) => llToLocal(lo, la)); mFit(); toast("Terreno importado"); };
+$("#mImg").onchange = e => { const f = e.target.files[0]; e.target.value = ""; if (!f) return; const im = new Image(); im.onload = () => { M.img = im; M.imgX = M.ox; M.imgY = M.oy; M.imgW = parseFloat($("#mImgW").value) || 100; mDraw(); toast("Imagen cargada: ajusta el ancho real y muévela con «Mover imagen»"); }; im.src = URL.createObjectURL(f); };
+$("#mImgW").oninput = e => { const v = parseFloat(String(e.target.value).replace(",", ".")); if (v > 0){ M.imgW = v; mDraw(); } };
+$("#mImgO").oninput = e => { M.imgO = +e.target.value; mDraw(); };
+$("#mCancel").onclick = () => { $("#mesa").hidden = true; if (draft && !draft.existing) showDraft(); };
+$("#mOk").onclick = async () => {
+  if (M.pts.length < 3) return toast("Dibuja al menos 3 vértices");
+  const s = polyStats(M.pts), geo = M.pts.map(([x, y]) => fromUTM(M.u0.E + x, M.u0.N + y, M.u0.zone, M.u0.south).map(v => +v.toFixed(7)));
+  const terreno = {geo, local:M.pts, area:s.area, per:s.per, utm:{zone:M.u0.zone, south:M.u0.south, E0:M.u0.E, N0:M.u0.N, pts:M.pts.map(([x, y]) => [+(M.u0.E + x).toFixed(3), +(M.u0.N + y).toFixed(3)])}};
+  $("#mesa").hidden = true;
+  if (draft.existing){ const p = draft.existing, {id, ...rest} = p; const doc = {...rest, terreno, datos:{...(rest.datos||{}), terreno:s.area.toFixed(2)}, actualizado:Date.now()};
+    try { await saveProject(id, doc); P = [...P.filter(x => x.id !== id), {id, ...doc}]; } catch(e){ return toast("No se pudo guardar el terreno"); }
+    draft = null; toast("Terreno guardado"); $("#fab-ctx").hidden = false; dirty = true; openCard(P.find(x => x.id === id)); return window.DIONCORE.startProject(P.find(x => x.id === id)); }
+  draft.terreno = terreno; dirty = true; showDraft();
+};
+
+/* ---------- contextos ---------- */
+$("#fab-ctx").onclick = () => { const p = P.find(x => x.id === active); if (!p) return toast("Toca primero un proyecto en el planeta"); $("#side").hidden = true; window.DIONCORE.startProject(p); };
+
+/* ---------- puente con A.S. y M.E.Z. (mismo bus que la Suite) ---------- */
+function sendToTools(p){
+  if (!p || !p.terreno) return toast("El proyecto aún no tiene terreno: trázalo primero");
+  const K = "NHIG_BUS_V1"; let b = {}; try { b = JSON.parse(localStorage.getItem(K) || "{}"); } catch(e){}
+  const pts = p.terreno.local, cx = pts.reduce((a, q) => a + q[0], 0)/pts.length, cy = pts.reduce((a, q) => a + q[1], 0)/pts.length;
+  b.terreno = {poly:pts.map(([x, y]) => [+(x - cx).toFixed(2), +(y - cy).toFixed(2)]), lat:+p.loc.lat, lon:+p.loc.lon, tz:(p.tz === "Pacific/Galapagos" ? -6 : p.iso === "ECU" || !p.iso ? -5 : Math.round(+p.loc.lon/15)), north:0, ha:+(p.terreno.area/1e4).toFixed(4), elev:0, proyecto:p.nombre, dion:p.id};
+  b.masterplan = {items:[]}; b._meta = b._meta || {}; b._meta.terreno = {from:"dion", t:Date.now()}; b._meta.masterplan = {from:"dion", t:Date.now()}; b.sync = {seq:Date.now()};
+  try { localStorage.setItem(K, JSON.stringify(b)); toast("Terreno de «" + p.nombre + "» enviado a A.S. y M.E.Z."); } catch(e){ toast("No se pudo compartir el terreno con las herramientas"); }
+}
+
+/* ---------- herramientas en ventanas holográficas (iframes) ---------- */
+const TOOLS = {
+  trayectoria:{src:"atlas.html", frame:"atlas", t:"TRAYECTORIA", s:"Proyectos realizados y línea de tiempo", view:"home", sh:"TRY"},
+  atlas:{src:"atlas.html", frame:"atlas", t:"ATLAS TIPOLÓGICO", s:"572 tipologías de micro a macro", view:"atlas", sh:"ATL"},
+  flujo:{src:"atlas.html", frame:"atlas", t:"FLUJO DE PROYECTO", s:"Materias en orden · línea de tiempo · avance", view:"flujo", sh:"FLJ"},
+  clientes:{src:"atlas.html", frame:"atlas", t:"CLIENTES", s:"Sesiones privadas con retención", view:"ses", sh:"CLI"},
+  bim:{src:"atlas.html", frame:"atlas", t:"BIBLIOTECA BIM", s:"Carpeta madre y codificación", view:"flujo", lib:"carp", sh:"BIM"},
+  as:{src:"as.html", frame:"as", t:"A.S. · ANÁLISIS DE SITIO", s:"Sol, sombras, viento (fluido), temperatura", sync:1, sh:"A.S."},
+  mez:{src:"mez.html", frame:"mez", t:"M.E.Z.", s:"Matrices, esquemas y zonificación", sync:1, sh:"MEZ"}
+};
+const frames = {};
+function setCurrent(k){ document.querySelectorAll(".orbtn").forEach(b => b.setAttribute("aria-current", String(b.dataset.go === k))); }
+function openTool(k, opts){
+  const T = TOOLS[k]; if (!T) return; $("#side").hidden = true;
+  const p = P.find(x => x.id === active);
+  if (T.sync && p && p.terreno) sendToTools(p);
+  const w = window.DIONCORE.openWin({key:"tool:" + T.frame, title:T.t, sub:T.s, kind:"tool", short:T.sh, iframe:T.src, rerender:false, onClose:() => { delete frames[T.frame]; setCurrent("orbita"); }});
+  w.el.querySelector(".win-h b").textContent = T.t; w.el.querySelector(".win-h span").textContent = T.s;
+  const f = w.frame; frames[T.frame] = f; setCurrent(k);
+  const msg = {dion:"view", v:T.view, lib:(opts && opts.lib) || T.lib, open:opts && opts.open};
+  if (T.frame !== "atlas") return w;
+  if (f.dataset.ready){ try { f.contentWindow.postMessage(msg, "*"); } catch(e){} } else f.dataset.pending = JSON.stringify(msg);
+  if (!f._h){ f._h = 1; f.addEventListener("load", () => setTimeout(() => { if (!f.dataset.ready){ f.dataset.ready = 1; if (f.dataset.pending){ try { f.contentWindow.postMessage(JSON.parse(f.dataset.pending), "*"); } catch(e){} delete f.dataset.pending; } } }, 150)); }
+  return w;
+}
+function closeStage(){ Object.keys(window.DIONCORE.W).forEach(k => { const w = window.DIONCORE.W[k]; if (!w.min) w.el.querySelector(".wb.m").click(); }); setCurrent("orbita"); dirty = true; }
+addEventListener("message", e => { const d = e.data; if (!d) return;
+  if (d.dion === "ready"){ const f = Object.values(frames).find(x => x.contentWindow === e.source); if (f){ f.dataset.ready = 1; if (f.dataset.pending){ e.source.postMessage(JSON.parse(f.dataset.pending), "*"); delete f.dataset.pending; } } }
+  if (d.dion === "planeta") closeStage();
+});
+/* las herramientas de la Suite piden guardar archivos a la página principal */
+let DLP = null; const getDL = () => DLP || (DLP = (async () => { try { return await window.claude?.use?.("downloads"); } catch(e){ DLP = null; return null; } })());
+addEventListener("message", async e => { const d = e.data; if (!d || d.nhig !== "save") return; const src = e.source;
+  try { const dl = await getDL(); if (!dl) throw Object.assign(new Error("Descargas no disponibles"), {code:"unavailable"}); await dl.save({filename:d.filename, data:d.data}); src && src.postMessage({nhig:"saved", id:d.id, ok:true}, "*"); }
+  catch(err){ src && src.postMessage({nhig:"saved", id:d.id, ok:false, code:err && err.code, msg:String(err && err.message || err)}, "*"); } });
+document.querySelectorAll(".orbtn").forEach(b => b.onclick = () => { const k = b.dataset.go; if (k === "orbita") return closeStage(); if (k === "taller") return window.DIONCORE.openTaller(); openTool(k, k === "bim" ? {open:active ? {id:active, page:"carp"} : null} : null); });
+addEventListener("keydown", e => { if (e.key !== "Escape") return; if (!$("#mesa").hidden) return $("#mCancel").click(); if (mode){ mode = null; cv.classList.remove("pick"); hint(""); } });
+
+/* ---------- arranque ---------- */
+crumbs();
+(async () => {
+  try { G.w110 = prep(await getJ("geo/world110.json"), "c"); dirty = true; } catch(e){ toast("No se pudo cargar el mapa del mundo"); }
+  try { G.e1 = prep(await getJ("geo/ecu1.json"), "e1"); G.w50 = prep(await getJ("geo/world50.json"), "c"); dirty = true; } catch(e){}
+  try { G.e2 = prep(await getJ("geo/ecu2.json"), "e2"); dirty = true; } catch(e){}
+  try { G.a1 = prep(await getJ("geo/admin1.json"), "a1"); dirty = true; } catch(e){}
+  try { G.cities = await getJ("geo/cities.json"); dirty = true; } catch(e){}
+})();
+(async () => {
+  P = lsGet(); computeWorked();
+  if (!window.claude || !window.claude.use) return;
+  try { db = await window.claude.use("db"); } catch(e){ db = null; }
+  if (!db) return;
+  unsub = db.collection("flujos").onSnapshot(sn => { P = sn.docs.map(d => ({id:d.id, ...d.data()})); computeWorked(); dirty = true; window.DIONCORE && window.DIONCORE.refreshLive(); }, () => {});
+})();
+async function savePatch(id, body){ if (db){ await db.doc("flujos/" + id).update(body); } else { const all = lsGet(); const p = all.find(x => x.id === id); if (p) Object.assign(p, body); lsSet(all); } computeWorked(); dirty = true; }
+function editTerrain(p){ active = p.id; draft = {id:p.id, nombre:p.nombre, tipo:p.tipo, lon:+p.loc.lon, lat:+p.loc.lat, existing:p}; $("#side").hidden = true; openMesa(); }
+window.DION = {G, V, flyTo, fitFeature, featuresAt, clickAt, openTool, proj, openCard, sendToTools, savePatch, editTerrain, toast, BYID, TYPES, getDL, closeStage,
+  get db(){ return db; }, get P(){ return P; }, get active(){ return active; }, set active(v){ active = v; }};
+})();
+</script>
+<script src="core.js"></script>
+
+
+</body></html>
